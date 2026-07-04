@@ -17,7 +17,11 @@
       "Bash(python -c \"import psyvis_ml; print\\('version', psyvis_ml.__version__\\); from psyvis_ml.fitting import fit_psychometric; print\\('import OK'\\)\")",
       "Bash(python -m ruff check --fix .)",
       "Bash(python -c \"import psyvis_ml; from psyvis_ml.sweep import run_sweep; from psyvis_ml.fitting import fit_psychometric; print\\('OK', psyvis_ml.__version__\\)\")",
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "Bash(ruff check *)",
+      "Bash(echo \"=== RUFF EXIT: $? ===\")",
+      "Bash(python -m pytest -q)",
+      "Bash(python -m pytest)"
     ]
   }
 }
