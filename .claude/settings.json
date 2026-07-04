@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(python -c \"import numpy, scipy; print\\('numpy', numpy.__version__\\); print\\('scipy', scipy.__version__\\)\")",
+      "Bash(python -c \"import pytest; print\\('pytest', pytest.__version__\\)\")",
+      "Bash(PYTHONPATH=src python -c ' *)",
+      "Bash(PYTHONPATH=src python -W error::RuntimeWarning -c ' *)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(python -m pytest -p no:cacheprovider)",
+      "Bash(python -m ruff --version)",
+      "Bash(python -m ruff check .)",
+      "Bash(python -c \"import psyvis_eval; print\\('version', psyvis_eval.__version__\\); from psyvis_eval.fitting import fit_psychometric; print\\('fitting import OK'\\)\")",
+      "Bash(sed -i 's/fit.params\\\\[\"threshold\"\\\\]/fit.params[\"alpha\"]/g' tests/test_fitting_recovery.py)",
+      "Bash(sed -i 's/for key in \\(\"threshold\", \"slope\", \"guess\", \"lapse\", \"threshold_at_0.75\",/for key in \\(\"alpha\", \"slope\", \"guess\", \"lapse\", \"threshold_at_0.75\",/' tests/test_fitting_asymptotes.py)",
+      "Bash(pip uninstall *)",
+      "Bash(python -c \"import psyvis_ml; print\\('version', psyvis_ml.__version__\\); from psyvis_ml.fitting import fit_psychometric; print\\('import OK'\\)\")",
+      "Bash(python -m ruff check --fix .)",
+      "Bash(python -c \"import psyvis_ml; from psyvis_ml.sweep import run_sweep; from psyvis_ml.fitting import fit_psychometric; print\\('OK', psyvis_ml.__version__\\)\")",
+      "Bash(python -c ' *)"
+    ]
+  }
+}
