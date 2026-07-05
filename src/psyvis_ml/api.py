@@ -89,13 +89,19 @@ class MeasureResult:
     ``.thresholds()`` etc. via the plural properties below.
     """
 
-    def __init__(self, condition_results, *, suite, dataset, chance_level, top_k, seed):
+    def __init__(self, condition_results, *, suite, dataset, chance_level, top_k, seed,
+                 model_name=None, decreasing=False):
         self.condition_results = list(condition_results)
         self.suite = suite
         self.dataset = dataset
         self.chance_level = chance_level
         self.top_k = top_k
         self.seed = seed
+        self.model_name = model_name
+        # Axis direction is *declared* by the suite and threaded through here so downstream
+        # code (compare, plot, report) labels direction without re-deriving it from the data.
+        # A falling/noisy curve near chance can never flip this — it is not inferred.
+        self.decreasing = bool(decreasing)
 
     # -- shape helpers ------------------------------------------------------ #
     @property
@@ -153,10 +159,32 @@ class MeasureResult:
 
         return plot_result(self, **kwargs)
 
+    def compare(self, others, **kwargs):
+        """Overlay this and other models' curves on one axis (the §8 comparison plot).
+
+        ``others`` is a list of :class:`MeasureResult` from other models measured on the same
+        suite/condition. Returns a matplotlib ``Figure``. See
+        :func:`psyvis_ml.comparison.compare_results`.
+        """
+        from .comparison import compare_results
+
+        return compare_results([self, *others], **kwargs)
+
+    def report(self, others=None, **kwargs):
+        """Write a self-contained methods bundle (text + figures + repro metadata).
+
+        See :func:`psyvis_ml.report.build_report`. Returns a ``ReportBundle``.
+        """
+        from .report import build_report
+
+        return build_report(self, others=others, **kwargs)
+
     def __repr__(self) -> str:
         return (
             f"MeasureResult(suite={self.suite.__class__.__name__}, "
-            f"conditions={self.labels}, chance={self.chance_level:.3g}, top_k={self.top_k})"
+            f"model={self.model_name!r}, conditions={self.labels}, "
+            f"chance={self.chance_level:.3g}, top_k={self.top_k}, "
+            f"decreasing={self.decreasing})"
         )
 
 
@@ -228,4 +256,5 @@ def measure(model, suite, dataset, levels, *, top_k=1, seed=None, lapse_rate=0.0
         )
 
     return MeasureResult(condition_results, suite=suite, dataset=dataset,
-                         chance_level=chance, top_k=top_k, seed=seed)
+                         chance_level=chance, top_k=top_k, seed=seed,
+                         model_name=mname, decreasing=decreasing)

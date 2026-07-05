@@ -16,8 +16,10 @@ and real ImageNet/timm loaders are not built yet.
 
 from importlib.metadata import PackageNotFoundError, version
 
-from . import datasets, suites
+from . import datasets, reference, suites
 from .api import ConditionResult, MeasureResult, linspace_levels, measure
+from .comparison import compare_results, comparison_summary
+from .report import build_report
 
 try:
     __version__ = version("psyvis-ml")
@@ -29,7 +31,11 @@ __all__ = [
     "MeasureResult",
     "ConditionResult",
     "linspace_levels",
+    "compare_results",
+    "comparison_summary",
+    "build_report",
     "suites",
     "datasets",
+    "reference",
     "__version__",
 ]

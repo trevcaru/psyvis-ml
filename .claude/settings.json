@@ -19,7 +19,9 @@
       "Bash(echo \"=== RUFF EXIT: $? ===\")",
       "Bash(python -m pytest -q)",
       "Bash(python -m pytest)",
-      "Bash(python -m pytest tests/test_isolation.py -q)"
+      "Bash(python -m pytest tests/test_isolation.py -q)",
+      "Bash(python -m pip install -e \".[dev]\")",
+      "Bash(echo \"install exit: $?\")"
     ]
   }
 }

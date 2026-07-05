@@ -15,11 +15,12 @@ reports thresholds and sensitivity functions, not accuracy at one severity.
 
 > Status: early development. This repository ships the **import-isolated fitting core**
 > (`psyvis_ml.fitting`), the **method-of-constant-stimuli sweep engine** with a reproducible
-> run bundle (`psyvis_ml.sweep`), the **contrast stimulus and `ContrastThreshold` suite**
-> (`psyvis_ml.stimuli`, `psyvis_ml.suites`), and the top-level **`pe.measure(...)` API** that
-> composes them (sweep → fit → threshold/slope/CI/plot). Still to come: the remaining
-> measurement suites (eccentricity/crowding, degradation), real ImageNet/timm loaders, and
-> the multi-model comparison and human-reference overlay layer.
+> run bundle (`psyvis_ml.sweep`), **three measurement suites** — contrast, eccentricity/
+> crowding, and degradation (`psyvis_ml.stimuli`, `psyvis_ml.suites`), the top-level
+> **`pe.measure(...)` API** (sweep → fit → threshold/slope/CI/plot), and the **comparison +
+> human-reference overlay + report-bundle** layer (`result.compare(...)`, `result.report(...)`,
+> `psyvis_ml.reference`). Still to come: real ImageNet/timm loaders and more human-reference
+> curves; adaptive staircases and Bayesian/hierarchical fitting remain v2.
 
 ## Install
 
@@ -80,6 +81,37 @@ this explicitly because the closest prior art measures a different observer:
 measure DNN CSFs via a trained linear contrast-discrimination probe on frozen features rather
 than argmax-top-1 on a labeled classification set. That is a legitimate, different observer
 model, and a comparison worth making — not a duplication.
+
+## Comparison, human overlays, and the report bundle
+
+Once you have measured several models, `result.compare([other_a, other_b, ...])` puts their
+psychometric curves — observed points, fitted curves, thresholds, and CI bands — on **one
+axis** for a shared suite/condition (the PRD §5/§12 "killer plot"). It honours each result's
+*declared* axis direction (rising for contrast/crowding, falling for degradation) and refuses
+to overlay results from mismatched suites/conditions rather than compare apples to oranges.
+
+Where a credible **published human curve** exists, the same axis carries a cited human
+overlay. We ship pre-collected/published human sensitivity data as static, versioned reference
+data and **never run human experiments or synthesize** a curve; where no good human data
+exists (e.g. crowding-in-natural-images, which is thin), the overlay **degrades gracefully** —
+models only, with a note — instead of fabricating one.
+
+Shipped human reference data (`psyvis_ml.reference`, files under `reference/data/`):
+
+- **Contrast sensitivity function** — an *approximate, digitized* human photopic CSF for
+  sinusoidal gratings (Michelson contrast), representative of the classic band-pass curve of
+  **Campbell, F. W., & Robson, J. G. (1968). Application of Fourier analysis to the visibility
+  of gratings. _The Journal of Physiology_, 197(3), 551–566.**
+  ([doi:10.1113/jphysiol.1968.sp008574](https://doi.org/10.1113/jphysiol.1968.sp008574)) and
+  consistent with the ModelFest / standard-observer literature. It is flagged `approximate` in
+  both the data file and the API, and is for illustration and cross-checking — not a
+  substitute for measuring your own observers, and its contrast metric (Michelson grating) may
+  differ from a given model dataset's.
+
+`result.report(others=[...])` writes a self-contained methods bundle — a threshold/slope/CI
+table, the fitted-curve figures, the models-vs-human comparison figure, and the
+**reproducibility metadata** captured in every run (resolved seed, config hash, library
+version) — that an external user can drop into a methods section (the §8 audit-bundle idea).
 
 ### Relationship to existing tools
 
