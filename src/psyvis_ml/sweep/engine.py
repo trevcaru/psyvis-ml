@@ -26,7 +26,7 @@ import warnings
 import numpy as np
 
 from .bundle import RunBundle, compute_config_hash, data_fingerprint, library_version
-from .scoring import count_correct
+from .scoring import score_logits
 
 __all__ = ["run_sweep"]
 
@@ -161,14 +161,25 @@ def run_sweep(
                 stim = apply_stimulus(images[j], level, rng)
                 rows.append(np.asarray(model(stim), dtype=float).ravel())
             logits = np.vstack(rows)
-        n_correct = count_correct(logits, labels, k=top_k)
-        return i, n_correct, logits.shape[1]
+        scores = score_logits(logits, labels, k=top_k)
+        n_correct = int(np.count_nonzero(scores.correct))
+        return i, n_correct, logits.shape[1], scores
 
     results = list(map_fn(score_level, range(len(levels))))
     results.sort(key=lambda r: r[0])  # re-sort: map_fn may be parallel / out of order
     n_correct = tuple(int(r[1]) for r in results)
     n_classes = int(results[0][2]) if results else 0
     n_trials = tuple(n_images for _ in levels)
+
+    # Per-image confidence signals, stacked to (n_levels, n_images). The margin is the primary
+    # signal; rank/target-logit/max-softmax are recorded too (softmax reference-only).
+    per_image = {
+        "margin": np.vstack([r[3].margin for r in results]),
+        "target_rank": np.vstack([r[3].target_rank for r in results]),
+        "target_logit": np.vstack([r[3].target_logit for r in results]),
+        "max_softmax": np.vstack([r[3].max_softmax for r in results]),
+        "correct": np.vstack([r[3].correct for r in results]),
+    }
 
     config = {
         "levels": levels,
@@ -193,4 +204,5 @@ def run_sweep(
         top_k=int(top_k),
         config=config,
         metadata={"n_images": n_images, "n_classes": n_classes, "batched": bool(batched)},
+        per_image=per_image,
     )

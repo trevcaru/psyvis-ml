@@ -153,6 +153,30 @@ class MeasureResult:
         """The stimulus levels swept (shared across conditions)."""
         return np.asarray(self.condition_results[0].bundle.levels, dtype=float)
 
+    # -- confidence readout (descriptive; not fit through the binomial core) ---- #
+    def confidence(self, *, criterion=0.0, n_boot=1000, ci=0.95, seed=0):
+        """Per-condition logit-margin readout (single ``ConfidenceReadout`` or ``{label: ...}``).
+
+        Carries the mean-margin curve, the baseline-relative Δ-margin curve, a confidence
+        threshold (level where the mean margin crosses ``criterion``; default ``0`` = evidence
+        parity), the local margin slope, bootstrap-over-images CIs, and the direction flag.
+        Absolute margins are within-model only — never overlay them across models.
+        """
+        from .confidence import confidence_readout
+
+        return self._single_or_dict([
+            confidence_readout(cr.bundle, decreasing=self.decreasing, criterion=criterion,
+                               n_boot=n_boot, ci=ci, seed=seed, chance_level=self.chance_level)
+            for cr in self.condition_results
+        ])
+
+    def confidence_threshold(self, *, criterion=0.0, n_boot=1000, ci=0.95, seed=0):
+        """Stimulus level where the mean logit margin crosses ``criterion``, per condition."""
+        readouts = self.confidence(criterion=criterion, n_boot=n_boot, ci=ci, seed=seed)
+        if self.is_single:
+            return readouts.confidence_threshold
+        return {lbl: r.confidence_threshold for lbl, r in readouts.items()}
+
     def plot(self, **kwargs):
         """Plot P(correct) vs. level with fitted curve(s) and CI band. Returns a Figure."""
         from .plotting import plot_result

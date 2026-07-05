@@ -136,6 +136,27 @@ def make_contrast_observer(num_classes, alpha=CONTRAST_ALPHA, beta=CONTRAST_BETA
     return contrast_observer
 
 
+def make_margin_observer(num_classes, crossing, slope):
+    """Graded-logit observer whose target-class logit margin is ``slope * (contrast - crossing)``.
+
+    The target logit is set to that margin and all competitors to 0, so the extracted margin
+    equals ``slope * (realized_contrast - crossing)`` exactly. Since ``apply_contrast`` sets the
+    realized RMS contrast to the swept level, the mean margin crosses 0 at contrast==``crossing``
+    — a deterministic ground truth for the confidence-threshold recovery test.
+    """
+    from psyvis_ml.datasets import decode_class
+    from psyvis_ml.stimuli.contrast import rms_contrast
+
+    def margin_observer(image):
+        contrast = rms_contrast(image)
+        cls = decode_class(image)
+        logits = np.zeros(num_classes, dtype=float)   # competitors at 0
+        logits[cls] = slope * (contrast - crossing)    # target logit == the margin
+        return logits
+
+    return margin_observer
+
+
 # --------------------------------------------------------------------------- #
 # 2-D target patches for the distractor + degradation suites.
 #

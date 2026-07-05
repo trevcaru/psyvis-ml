@@ -18,7 +18,8 @@ from importlib.metadata import PackageNotFoundError, version
 
 from . import datasets, models, reference, suites
 from .api import ConditionResult, MeasureResult, linspace_levels, measure
-from .comparison import compare_results, comparison_summary
+from .comparison import compare_results, comparison_summary, confidence_comparison
+from .confidence import ConfidenceReadout, confidence_readout
 from .distractor_calibration import DistractorCalibration, calibrate_distractor_spacing
 from .report import build_report
 
@@ -34,6 +35,9 @@ __all__ = [
     "linspace_levels",
     "compare_results",
     "comparison_summary",
+    "confidence_comparison",
+    "confidence_readout",
+    "ConfidenceReadout",
     "build_report",
     "calibrate_distractor_spacing",
     "DistractorCalibration",

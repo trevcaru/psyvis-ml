@@ -77,14 +77,16 @@ def _model_metadata(result, i):
 
 
 def _table_md(rows):
-    head = ("| model | threshold | 95% CI | slope | direction |\n"
-            "|---|---|---|---|---|\n")
+    head = ("| model | threshold | 95% CI | slope | direction | "
+            "conf. threshold (margin=0) | margin slope |\n"
+            "|---|---|---|---|---|---|---|\n")
     lines = []
     for r in rows:
         ci = f"[{_fmt(r['threshold_ci_low'])}, {_fmt(r['threshold_ci_high'])}]"
         lines.append(
             f"| {r['model']} | {_fmt(r['threshold'])} | {ci} | "
-            f"{_fmt(r['slope'])} | {r['direction']} |"
+            f"{_fmt(r['slope'])} | {r['direction']} | "
+            f"{_fmt(r.get('confidence_threshold'))} | {_fmt(r.get('margin_slope'))} |"
         )
     return head + "\n".join(lines) + "\n"
 
@@ -207,6 +209,18 @@ def build_report(result, *, others=None, outdir=None, condition=None, target=0.7
         "## Thresholds and slopes",
         "",
         _table_md(rows),
+        "## Confidence readout",
+        "",
+        "Beyond correct/incorrect, each sweep records the target-class **logit margin** "
+        "`margin(x) = logit[target] − max(logit[others])` per image — the primary confidence "
+        "signal (a raw evidence difference, **not** softmax; softmax is recorded for reference "
+        "only and is calibration-sensitive). The **confidence threshold** above is the level "
+        "where the mean margin crosses parity (`margin = 0`), with the local **margin slope**. "
+        "Absolute margins are reported **within-model only** — logit scales are not comparable "
+        "across models. The cross-model-comparable view is the **baseline-relative Δ-margin** "
+        "curve in the comparison figure (each model normalized to its own clean baseline); the "
+        "confidence readout is descriptive and is **not** fit through the binomial core.",
+        "",
         "## Reproducibility",
         "",
         "Every sweep is captured as an auditable run bundle. To reproduce a row, re-run the "

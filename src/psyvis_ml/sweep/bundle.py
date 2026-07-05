@@ -53,7 +53,14 @@ def compute_config_hash(config: dict) -> str:
 
 @dataclass(frozen=True)
 class RunBundle:
-    """Immutable record of one sweep."""
+    """Immutable record of one sweep.
+
+    ``per_image`` optionally holds the raw per-image confidence signals as
+    ``(n_levels, n_images)`` arrays keyed by ``"margin"``, ``"target_rank"``,
+    ``"target_logit"``, ``"max_softmax"``, and ``"correct"``. It feeds the descriptive
+    confidence readout (:mod:`psyvis_ml.confidence`) — it is *not* part of the config hash and
+    does not feed the binomial fitting core.
+    """
 
     seed: int
     config_hash: str
@@ -64,6 +71,7 @@ class RunBundle:
     top_k: int
     config: dict = field(default_factory=dict)
     metadata: dict = field(default_factory=dict)
+    per_image: dict = field(default_factory=dict)
 
     def to_fit_inputs(self):
         """Return ``(levels, n_correct, n_trials)`` as arrays, ready for ``fit_psychometric``."""
@@ -72,6 +80,12 @@ class RunBundle:
             np.asarray(self.n_correct, dtype=float),
             np.asarray(self.n_trials, dtype=float),
         )
+
+    def margins(self) -> np.ndarray:
+        """Per-image logit margins as a ``(n_levels, n_images)`` array (raises if absent)."""
+        if "margin" not in self.per_image:
+            raise KeyError("this bundle has no per-image margins (no confidence signal recorded).")
+        return np.asarray(self.per_image["margin"], dtype=float)
 
     def to_dict(self) -> dict:
         return {

@@ -123,6 +123,17 @@ def test_plot_multi_condition_smoke():
         suite = pe.suites.ContrastThreshold(spatial_freqs=[1, 2])
     res = pe.measure(model=model, suite=suite, dataset=ds, levels=levels, seed=1)
     fig = res.plot(n_boot=20, show_ci=False)
-    assert len(fig.axes) == 1
+    # Two panels by default: the accuracy curve and the within-model confidence (margin) panel.
+    assert len(fig.axes) == 2
+    assert fig.axes[0].get_ylabel() == "P(correct)"
+    assert "margin" in fig.axes[1].get_ylabel()
+    import matplotlib.pyplot as plt
+    plt.close(fig)
+
+
+def test_plot_confidence_can_be_disabled():
+    res = _run_single(n=150)
+    fig = res.plot(n_boot=20, show_ci=False, show_confidence=False)
+    assert len(fig.axes) == 1  # accuracy only
     import matplotlib.pyplot as plt
     plt.close(fig)
