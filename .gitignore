@@ -25,6 +25,7 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# Generated diagnostic outputs (e.g. examples/q1_ceiling_check.py, report bundles)
-outputs/
+# Generated diagnostic outputs (e.g. report bundles) — but keep the committed results gallery.
+/outputs/*
+!/outputs/gallery/
 report_bundle/

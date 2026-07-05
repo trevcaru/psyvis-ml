@@ -17,10 +17,13 @@ reports thresholds and sensitivity functions, not accuracy at one severity.
 > (`psyvis_ml.fitting`), the **method-of-constant-stimuli sweep engine** with a reproducible
 > run bundle (`psyvis_ml.sweep`), **three measurement suites** — contrast, degradation, and
 > distractor-robustness (`psyvis_ml.stimuli`, `psyvis_ml.suites`), the top-level
-> **`pe.measure(...)` API** (sweep → fit → threshold/slope/CI/plot), and the **comparison +
-> human-reference overlay + report-bundle** layer (`result.compare(...)`, `result.report(...)`,
-> `psyvis_ml.reference`). Still to come: real ImageNet/timm loaders and more human-reference
-> curves; adaptive staircases and Bayesian/hierarchical fitting remain v2.
+> **`pe.measure(...)` API** (sweep → fit → threshold/slope/CI/plot), a **graded
+> confidence-readout layer** — per-image target-class logit-margin curves across every suite,
+> baseline-relative Δ-margin, and a confidence threshold with bootstrap CIs
+> (`result.confidence(...)`, `psyvis_ml.confidence`) — and the **comparison + human-reference
+> overlay + report-bundle** layer (`result.compare(...)`, `result.report(...)`,
+> `psyvis_ml.reference`). Still to come: more human-reference curves; adaptive staircases,
+> Bayesian/hierarchical fitting, and meta-d′/type-2 scoring remain v2.
 
 ## Install
 
@@ -68,6 +71,46 @@ results[0].report(others=results[1:], outdir="report_bundle")   # methods-ready 
 
 `model` is just a callable `image -> logits`; `timm_classifier` is a convenience wrapper, not
 a requirement — any framework (or a plain function) works.
+
+## Results gallery
+
+Standing figures on real **Imagenette** val (resnet50 + `vit_small_patch16_224`), regenerated
+by [`examples/generate_gallery.py`](examples/generate_gallery.py) into
+[`outputs/gallery/`](outputs/gallery/) (numbers in
+[`outputs/gallery/results.md`](outputs/gallery/results.md) /
+[`results.json`](outputs/gallery/results.json)):
+
+**Contrast — human vs. models (lead figure).**
+
+![contrast: human vs. models](outputs/gallery/contrast_human_vs_models.png)
+
+> **Paradigm caveat (read with the figure).** The human line is *grating-detection* contrast
+> sensitivity (Campbell & Robson 1968, Michelson contrast); the model curves are *argmax-
+> classification* correctness on natural images (RMS contrast). Different observer paradigms on
+> a shared contrast axis — a model threshold far from the human line is a difference in task,
+> not proof a model does or doesn't "see like" a human.
+
+**Degradation (gaussian noise) — fitted falling curves + Δ-margin.**
+
+![degradation comparison](outputs/gallery/degradation_comparison.png)
+
+**Distractor robustness — ceiling-limited (see caveat in `results.md`).**
+
+![distractor comparison](outputs/gallery/distractor_comparison.png)
+
+**Confidence layer — baseline-relative Δ logit margin (contrast).** The primary confidence
+signal is the target-class **logit margin** (not softmax); across models it is compared only
+as Δ from each model's own clean baseline.
+
+![contrast Δ-margin](outputs/gallery/contrast_confidence_delta.png)
+
+Regenerate locally (you supply the data — nothing is bundled or downloaded):
+
+```bash
+pip install -e ".[demo]"
+export PSYVIS_IMAGENET_DIR=/path/to/imagenette2/val
+python examples/generate_gallery.py
+```
 
 ## The fitting core
 

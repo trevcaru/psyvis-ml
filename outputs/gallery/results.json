@@ -1,0 +1,82 @@
+{
+  "data_dir": "C:/Users/glopu/OneDrive/Desktop/Experiments/Exp_assets/imagenette2-320/val",
+  "models": [
+    "resnet50",
+    "vit_small_patch16_224"
+  ],
+  "max_per_class": 20,
+  "rows": [
+    {
+      "model": "resnet50",
+      "condition": "contrast[rms]",
+      "threshold": 0.04970908963348951,
+      "threshold_ci_low": 0.0386644695512967,
+      "threshold_ci_high": 0.06310432471473967,
+      "slope": 1.9567695251983515,
+      "direction": "increasing",
+      "confidence_threshold": NaN,
+      "margin_slope": NaN,
+      "suite": "contrast"
+    },
+    {
+      "model": "vit_small_patch16_224",
+      "condition": "contrast[rms]",
+      "threshold": 0.19553139932732902,
+      "threshold_ci_low": 0.1688357793896224,
+      "threshold_ci_high": 0.2305290066665399,
+      "slope": 1.0082427547097303,
+      "direction": "increasing",
+      "confidence_threshold": 0.03401369430653827,
+      "margin_slope": 99.58640285325657,
+      "suite": "contrast"
+    },
+    {
+      "model": "resnet50",
+      "condition": "degradation[gaussian_noise]",
+      "threshold": 0.08668797596156233,
+      "threshold_ci_low": 0.06453659679752599,
+      "threshold_ci_high": 0.11107142803066636,
+      "slope": -1.5566027909657518,
+      "direction": "decreasing",
+      "confidence_threshold": 0.2613112712702121,
+      "margin_slope": -31.813560412824152,
+      "suite": "degradation"
+    },
+    {
+      "model": "vit_small_patch16_224",
+      "condition": "degradation[gaussian_noise]",
+      "threshold": 0.12257018428469174,
+      "threshold_ci_low": 0.09188545016776635,
+      "threshold_ci_high": 0.15366583000381817,
+      "slope": -1.1724639387099227,
+      "direction": "decreasing",
+      "confidence_threshold": 0.3162029949096069,
+      "margin_slope": -15.92989272661507,
+      "suite": "degradation"
+    },
+    {
+      "model": "resnet50",
+      "condition": "distractors",
+      "threshold": 89.97840354471501,
+      "threshold_ci_low": 86.36300971348925,
+      "threshold_ci_high": 94.58351225006959,
+      "slope": 0.028622649331616852,
+      "direction": "increasing",
+      "confidence_threshold": NaN,
+      "margin_slope": NaN,
+      "suite": "distractor"
+    },
+    {
+      "model": "vit_small_patch16_224",
+      "condition": "distractors",
+      "threshold": 90.2821574241281,
+      "threshold_ci_low": 87.02573080417628,
+      "threshold_ci_high": 94.86368562964458,
+      "slope": 0.03622588174674371,
+      "direction": "increasing",
+      "confidence_threshold": NaN,
+      "margin_slope": NaN,
+      "suite": "distractor"
+    }
+  ]
+}
