@@ -13,9 +13,13 @@ contrast at 75% correct), a **slope** (how fast performance changes near thresho
 human observer's. `psyvis-ml` treats a vision model as a psychophysical observer and
 reports thresholds and sensitivity functions, not accuracy at one severity.
 
-> Status: early development. This repository currently ships the **import-isolated fitting
-> core** (`psyvis_ml.fitting`). The sweep engine, measurement suites, datasets, and the
-> `pe.measure(...)` API described in the PRD are not built yet.
+> Status: early development. This repository ships the **import-isolated fitting core**
+> (`psyvis_ml.fitting`), the **method-of-constant-stimuli sweep engine** with a reproducible
+> run bundle (`psyvis_ml.sweep`), the **contrast stimulus and `ContrastThreshold` suite**
+> (`psyvis_ml.stimuli`, `psyvis_ml.suites`), and the top-level **`pe.measure(...)` API** that
+> composes them (sweep → fit → threshold/slope/CI/plot). Still to come: the remaining
+> measurement suites (eccentricity/crowding, degradation), real ImageNet/timm loaders, and
+> the multi-model comparison and human-reference overlay layer.
 
 ## Install
 

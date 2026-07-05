@@ -48,6 +48,29 @@ def _model_name(model, explicit):
     return getattr(model, "__name__", None) or type(model).__name__
 
 
+def _decreasing_logistic_fit_kwargs(levels, guess_rate, lapse_rate):
+    """Bounds + start point for a *decreasing* logistic (falling P vs. an increasing axis).
+
+    Degradation performance falls with severity, so the logistic slope must be negative — but
+    the fitter's default logistic bounds force a positive slope. We build negative-slope
+    bounds here (in ``measure``, not the import-isolated core) and seed a decreasing start so
+    the optimizer does not have to escape a flat region. ``guess`` is always a fixed number in
+    ``measure`` (the chance level), so only ``alpha``/``slope`` — and ``lapse`` when
+    ``lapse_rate is None`` — are free, matching the fitter's packed free-parameter order.
+    """
+    levels = np.asarray(levels, dtype=float)
+    lo, hi = float(np.min(levels)), float(np.max(levels))
+    span = (hi - lo) if hi > lo else max(abs(hi), 1.0)
+    alpha_bounds = (lo - 10.0 * span, hi + 10.0 * span)
+    slope_bounds = (-1e6 / span, -1e-6 / span)  # strictly negative: force a falling curve
+    bounds = [alpha_bounds, slope_bounds]
+    x0 = [0.5 * (lo + hi), -4.0 / span]
+    if lapse_rate is None:  # lapse becomes a free parameter, appended last
+        bounds.append((0.0, 0.5 - 1e-6))
+        x0.append(0.02)
+    return {"bounds": bounds, "x0": x0}
+
+
 @dataclass(frozen=True)
 class ConditionResult:
     """Per-condition outcome: the label, its run bundle, and its psychometric fit."""
@@ -172,6 +195,12 @@ def measure(model, suite, dataset, levels, *, top_k=1, seed=None, lapse_rate=0.0
 
     chance = suite.chance_level(num_classes, top_k)
     sigmoid = getattr(suite, "sigmoid", "weibull")
+    decreasing = bool(getattr(suite, "decreasing", False))
+    if decreasing and sigmoid != "logistic":
+        raise ValueError(
+            f"a decreasing suite must use sigmoid='logistic'; {suite.__class__.__name__} "
+            f"declares sigmoid={sigmoid!r}."
+        )
     mname = _model_name(model, model_name)
 
     condition_results = []
@@ -190,8 +219,9 @@ def measure(model, suite, dataset, levels, *, top_k=1, seed=None, lapse_rate=0.0
                           "suite": suite.__class__.__name__},
         )
         lv, nc, nt = bundle.to_fit_inputs()
+        extra_fit = _decreasing_logistic_fit_kwargs(lv, chance, lapse_rate) if decreasing else {}
         fit = fit_psychometric(lv, nc, nt, sigmoid=sigmoid, guess_rate=chance,
-                               lapse_rate=lapse_rate)
+                               lapse_rate=lapse_rate, **extra_fit)
         condition_results.append(
             ConditionResult(label=cond.label, bundle=bundle, fit=fit,
                             metadata=dict(cond.metadata))

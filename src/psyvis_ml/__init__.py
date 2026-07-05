@@ -9,9 +9,9 @@ slopes with confidence intervals instead of accuracy at one severity.
                         levels=pe.linspace_levels(0.01, 0.5, 8, spacing="log"))
     result.threshold(); result.slope(); result.fit(); result.plot()
 
-This slice ships the fitting core, the sweep engine, the contrast stimulus + suite, and the
-``measure()`` API. The eccentricity/crowding and degradation suites, comparison/report layer,
-human-reference overlays, and real ImageNet/timm loaders are not built yet.
+This ships the fitting core, the sweep engine, the contrast / crowding / degradation stimuli
+and suites, and the ``measure()`` API. The comparison/report layer, human-reference overlays,
+and real ImageNet/timm loaders are not built yet.
 """
 
 from importlib.metadata import PackageNotFoundError, version
