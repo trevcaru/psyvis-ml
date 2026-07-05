@@ -184,10 +184,17 @@ def compare_results(results, *, condition=None, target=0.75, human="auto", ax=No
         if spec is not None:
             ref, sf, human_thr = spec
             ax.axvline(human_thr, color="black", ls="-.", lw=1.6, zorder=5,
-                       label=f"{ref.label()} @ {sf:g} cpd")
+                       label=f"human {ref.human_paradigm.split('(')[0].strip()} "
+                             f"threshold @ {sf:g} cpd")
             approx = "approx.; " if ref.approximate else ""
-            human_note = (f"Human overlay: {ref.metric} contrast threshold at {sf:g} cpd "
-                          f"({approx}see citation). Model contrast metric may differ.")
+            # Name the *paradigm* difference, not just the metric/approximation (PRD §14):
+            # human = grating DETECTION sensitivity; model = argmax CLASSIFICATION correctness.
+            human_note = (
+                f"Human line = grating-DETECTION contrast sensitivity "
+                f"({ref.metric}, {sf:g} cpd; {approx}see citation). "
+                f"Model curves = argmax-CLASSIFICATION correctness. Different observer "
+                f"paradigms on a shared contrast axis — not identical tasks."
+            )
         else:
             human_note = f"No published human reference available for {suite_name}."
 

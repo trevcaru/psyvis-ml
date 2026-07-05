@@ -44,7 +44,8 @@ def test_human_reference_for_contrast_present():
     assert ref is not None and ref.suite == "ContrastThreshold"
 
 
-@pytest.mark.parametrize("suite_name", ["CrowdingSuite", "DegradationSuite", "SomethingElse"])
+@pytest.mark.parametrize("suite_name",
+                         ["DistractorRobustness", "DegradationSuite", "SomethingElse"])
 def test_human_reference_absent_returns_none(suite_name):
     # No fabricated human data for suites without a credible published curve (PRD §14).
     assert human_reference_for(suite_name) is None

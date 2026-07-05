@@ -21,7 +21,23 @@
       "Bash(python -m pytest)",
       "Bash(python -m pytest tests/test_isolation.py -q)",
       "Bash(python -m pip install -e \".[dev]\")",
-      "Bash(echo \"install exit: $?\")"
+      "Bash(echo \"install exit: $?\")",
+      "Bash(python -c \"import torch; print\\('torch', torch.__version__\\)\")",
+      "Bash(python -c \"import timm; print\\('timm', timm.__version__\\)\")",
+      "Bash(python -c \"import urllib.request; urllib.request.urlopen\\('https://pypi.org', timeout=5\\); print\\('network: OK'\\)\")",
+      "Bash(python -c \"import skimage; print\\('skimage', skimage.__version__\\)\")",
+      "Bash(python -c \"import scipy.datasets as d; print\\('scipy.datasets: face+ascent available'\\)\")",
+      "Bash(python -c \"import matplotlib, os; p=os.path.join\\(os.path.dirname\\(matplotlib.__file__\\),'mpl-data','sample_data'\\); import glob; print\\('mpl samples:', [os.path.basename\\(x\\) for x in glob.glob\\(p+'/*.jpg'\\)+glob.glob\\(p+'/*.png'\\)][:12]\\)\")",
+      "Bash(python -c \"import sys; [sys.modules.__setitem__\\(m,None\\) for m in ['torch','timm','PIL']]; import psyvis_ml; print\\('bare import OK'\\)\")",
+      "Bash(python -c \"import sys; [sys.modules.__setitem__\\(m,None\\) for m in ['torch','timm','PIL']]; import psyvis_ml as pe; print\\('bare import OK; calibrate exposed:', hasattr\\(pe,'calibrate_crowding_spacing'\\)\\)\")",
+      "Bash(echo \"=== RUFF: $? ===\")",
+      "Bash(grep -n \"outputs\" .gitignore)",
+      "Bash(tail -3 .gitignore)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('examples/q1_ceiling_check.py'\\).read\\(\\)\\); print\\('q1_ceiling_check.py compiles OK'\\)\")",
+      "Bash(python -m pip install -e \".[demo]\")",
+      "Bash(echo \"install: $?\")",
+      "Bash(python -c \"import os; d=os.environ.get\\('PSYVIS_IMAGENET_DIR'\\); print\\('PSYVIS_IMAGENET_DIR:', repr\\(d\\), '| isdir:', bool\\(d and os.path.isdir\\(d\\)\\)\\)\")",
+      "Bash(python examples/q1_window_check.py)"
     ]
   }
 }

@@ -3,8 +3,9 @@
 We **ship pre-collected / published** human sensitivity curves as static reference data where
 good ones exist, and we **never run human experiments or synthesize** human data. Each curve
 carries its citation and an ``approximate`` flag, and lookups **degrade gracefully**: when no
-credible human reference exists for a suite (e.g. crowding-in-natural-images, which is thin —
-§14), the lookup returns ``None`` so callers plot models only rather than fabricating a curve.
+credible human reference exists for a suite (e.g. distractor robustness, which has no
+established human sensitivity curve), the lookup returns ``None`` so callers plot models only
+rather than fabricating a curve.
 
 Currently shipped:
   * ``contrast_sensitivity`` — the human photopic contrast sensitivity function (CSF), an
@@ -52,6 +53,8 @@ class HumanReference:
     source_note: str
     spatial_freq: np.ndarray
     sensitivity: np.ndarray
+    human_paradigm: str = "grating detection"
+    paradigm_caveat: str = ""
 
     def threshold(self) -> np.ndarray:
         """Contrast thresholds = 1 / sensitivity at each tabulated spatial frequency."""
@@ -95,6 +98,8 @@ def contrast_sensitivity_reference() -> HumanReference:
         source_note=d["source_note"],
         spatial_freq=np.asarray(d["spatial_frequency_cpd"], dtype=float),
         sensitivity=np.asarray(d["contrast_sensitivity"], dtype=float),
+        human_paradigm=d.get("human_paradigm", "grating detection"),
+        paradigm_caveat=d.get("paradigm_caveat", ""),
     )
 
 
@@ -108,8 +113,8 @@ def human_reference_for(suite_name: str):
     """Return the :class:`HumanReference` for a suite class name, or ``None`` if none exists.
 
     ``None`` is the honest, graceful answer for suites without a credible published human
-    curve (e.g. ``CrowdingSuite``, ``DegradationSuite``) — callers overlay nothing and note
-    the absence rather than inventing data (§14).
+    curve (e.g. ``DegradationSuite``, ``DistractorRobustness``) — callers overlay nothing and
+    note the absence rather than inventing data (§14).
     """
     loader = _REFERENCES.get(suite_name)
     return loader() if loader is not None else None

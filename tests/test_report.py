@@ -80,6 +80,12 @@ def test_report_includes_human_citation_for_contrast(tmp_path):
     assert rb.metadata["human_reference"] is not None
     assert "Campbell" in rb.markdown           # cited
     assert rb.metadata["human_reference"]["approximate"] is True
+    # The report must name the paradigm difference (detection vs. classification), not just
+    # that the human values are approximate (PRD §14 Frame-B honesty).
+    assert "Paradigm difference" in rb.markdown
+    low = rb.markdown.lower()
+    assert "detection" in low and "classification" in low
+    assert rb.metadata["human_reference"]["paradigm_caveat"]
 
 
 def test_report_degrades_gracefully_without_human(tmp_path):

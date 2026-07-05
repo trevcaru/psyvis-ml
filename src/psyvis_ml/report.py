@@ -168,6 +168,7 @@ def build_report(result, *, others=None, outdir=None, condition=None, target=0.7
             "name": ref.name, "citation": ref.citation, "version": ref.version,
             "approximate": ref.approximate, "metric": ref.metric,
             "quantity": ref.quantity, "source_note": ref.source_note,
+            "human_paradigm": ref.human_paradigm, "paradigm_caveat": ref.paradigm_caveat,
         }
 
     metadata = {
@@ -228,6 +229,9 @@ def build_report(result, *, others=None, outdir=None, condition=None, target=0.7
     if human_meta is not None:
         approx = " (approximate/digitized)" if human_meta["approximate"] else ""
         md.append(f"Human overlay{approx}: {human_meta['citation']}")
+        md.append("")
+        md.append(f"**Paradigm difference (read before interpreting):** "
+                  f"{human_meta['paradigm_caveat']}")
         md.append("")
         md.append(f"> {human_meta['source_note']}")
     else:

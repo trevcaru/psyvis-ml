@@ -137,13 +137,13 @@ def make_contrast_observer(num_classes, alpha=CONTRAST_ALPHA, beta=CONTRAST_BETA
 
 
 # --------------------------------------------------------------------------- #
-# 2-D target patches for the crowding + degradation suites.
+# 2-D target patches for the distractor + degradation suites.
 #
 # A patch is a `size x size` array at a base luminance encoding the difficulty quantile q
 # (base = MEAN_BASE + MEAN_SPAN*(q-0.5)), with the whole class-`cls` column raised by `amp`.
 # Reading class as the argmax of column means, and q as the *median* pixel (the base, since a
-# single raised column is a minority), is robust to partial occlusion or flanker overwrite --
-# so a synthetic observer can recover class and q even from a degraded composite.
+# single raised column is a minority), is robust to partial occlusion or distractor overwrite
+# -- so a synthetic observer can recover class and q even from a degraded composite.
 # --------------------------------------------------------------------------- #
 MEAN_BASE = 0.5   # mirror psyvis_ml.datasets so patches decode with the same convention
 MEAN_SPAN = 0.3
@@ -179,11 +179,11 @@ def decode_patch(image, fill=0.0):
     return cls, _q_from_base(base)
 
 
-def decode_crowding_target(canvas):
-    """Recover (class, q) from the target patch on a crowding canvas.
+def decode_distractor_target(canvas):
+    """Recover (class, q) from the target patch on a distractor canvas.
 
-    The target is the only strictly-positive content (background is 0, flankers are negative),
-    so its bounding box isolates it; class/q read exactly when flankers do not overlap it.
+    The target is the only strictly-positive content (background is 0, distractors negative),
+    so its bounding box isolates it; class/q read exactly when distractors do not overlap it.
     """
     canvas = np.asarray(canvas, dtype=float)
     valid = canvas > 0.0
@@ -195,11 +195,11 @@ def decode_crowding_target(canvas):
     return cls, _q_from_base(base)
 
 
-def decode_flanker_spacing(canvas):
-    """Recover the flanker spacing from a crowding canvas (inf if unflanked).
+def decode_distractor_spacing(canvas):
+    """Recover the distractor spacing from a distractor canvas (inf if undistracted).
 
-    Flankers are the negative-valued blobs; for two symmetric flankers at +-spacing about the
-    target, the inter-flanker centroid distance is 2*spacing, so spacing = distance / 2.
+    Distractors are the negative-valued blobs; for two symmetric distractors at +-spacing about
+    the target, the inter-distractor centroid distance is 2*spacing, so spacing = distance / 2.
     """
     from scipy.ndimage import center_of_mass, label
 
@@ -208,48 +208,48 @@ def decode_flanker_spacing(canvas):
     if n < 2:
         return np.inf
     coms = np.asarray(center_of_mass(np.ones_like(canvas), lbl, range(1, n + 1)))
-    # Two blobs (n_flankers=2): half their separation is the target-to-flanker spacing.
+    # Two blobs (n_distractors=2): half their separation is the target-to-distractor spacing.
     d = float(np.hypot(*(coms[0] - coms[1])))
     return d / 2.0
 
 
 # --------------------------------------------------------------------------- #
-# Crowding observer: P(correct) RISES with flanker spacing (Weibull in spacing).
+# Distractor observer: P(correct) RISES with distractor spacing (Weibull in spacing).
 # --------------------------------------------------------------------------- #
-CROWD_ALPHA = 12.0   # critical-spacing scale (pixels)
-CROWD_BETA = 3.0
-CROWD_LAPSE = 0.02
+DIST_ALPHA = 12.0   # spacing scale (pixels) at which the distractor stops interfering
+DIST_BETA = 3.0
+DIST_LAPSE = 0.02
 
 
-def crowding_p_true(spacing, num_classes, alpha=CROWD_ALPHA, beta=CROWD_BETA,
-                    lapse=CROWD_LAPSE):
+def distractor_p_true(spacing, num_classes, alpha=DIST_ALPHA, beta=DIST_BETA,
+                      lapse=DIST_LAPSE):
     guess = 1.0 / num_classes
     if not np.isfinite(spacing):
-        f = 1.0  # unflanked baseline: no crowding, target at ceiling
+        f = 1.0  # undistracted baseline: target at ceiling
     else:
         f = 1.0 - np.exp(-((max(spacing, 0.0) / alpha) ** beta))
     return guess + (1.0 - guess - lapse) * f
 
 
-def crowding_true_threshold(num_classes, target=0.75, alpha=CROWD_ALPHA, beta=CROWD_BETA,
-                            lapse=CROWD_LAPSE):
+def distractor_true_threshold(num_classes, target=0.75, alpha=DIST_ALPHA, beta=DIST_BETA,
+                              lapse=DIST_LAPSE):
     guess = 1.0 / num_classes
     f_target = (target - guess) / (1.0 - guess - lapse)
     return alpha * (-np.log(1.0 - f_target)) ** (1.0 / beta)
 
 
-def make_crowding_observer(num_classes, alpha=CROWD_ALPHA, beta=CROWD_BETA,
-                           lapse=CROWD_LAPSE):
-    def crowding_observer(canvas):
-        spacing = decode_flanker_spacing(canvas)
-        cls, q = decode_crowding_target(canvas)
-        correct = q < crowding_p_true(spacing, num_classes, alpha, beta, lapse)
+def make_distractor_observer(num_classes, alpha=DIST_ALPHA, beta=DIST_BETA,
+                             lapse=DIST_LAPSE):
+    def distractor_observer(canvas):
+        spacing = decode_distractor_spacing(canvas)
+        cls, q = decode_distractor_target(canvas)
+        correct = q < distractor_p_true(spacing, num_classes, alpha, beta, lapse)
         pred = cls if correct else (cls + 1) % num_classes
         logits = np.full(num_classes, -10.0)
         logits[pred] = 10.0
         return logits
 
-    return crowding_observer
+    return distractor_observer
 
 
 # --------------------------------------------------------------------------- #

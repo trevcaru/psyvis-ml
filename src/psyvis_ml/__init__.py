@@ -9,16 +9,17 @@ slopes with confidence intervals instead of accuracy at one severity.
                         levels=pe.linspace_levels(0.01, 0.5, 8, spacing="log"))
     result.threshold(); result.slope(); result.fit(); result.plot()
 
-This ships the fitting core, the sweep engine, the contrast / crowding / degradation stimuli
-and suites, and the ``measure()`` API. The comparison/report layer, human-reference overlays,
-and real ImageNet/timm loaders are not built yet.
+This ships the fitting core, the sweep engine, the contrast / degradation / distractor-
+robustness stimuli and suites, the ``measure()`` API, and the comparison / human-reference /
+report layer. Real ImageNet/timm convenience loaders are optional (the ``[demo]`` extra).
 """
 
 from importlib.metadata import PackageNotFoundError, version
 
-from . import datasets, reference, suites
+from . import datasets, models, reference, suites
 from .api import ConditionResult, MeasureResult, linspace_levels, measure
 from .comparison import compare_results, comparison_summary
+from .distractor_calibration import DistractorCalibration, calibrate_distractor_spacing
 from .report import build_report
 
 try:
@@ -34,8 +35,11 @@ __all__ = [
     "compare_results",
     "comparison_summary",
     "build_report",
+    "calibrate_distractor_spacing",
+    "DistractorCalibration",
     "suites",
     "datasets",
+    "models",
     "reference",
     "__version__",
 ]

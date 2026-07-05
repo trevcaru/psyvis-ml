@@ -15,8 +15,8 @@ reports thresholds and sensitivity functions, not accuracy at one severity.
 
 > Status: early development. This repository ships the **import-isolated fitting core**
 > (`psyvis_ml.fitting`), the **method-of-constant-stimuli sweep engine** with a reproducible
-> run bundle (`psyvis_ml.sweep`), **three measurement suites** — contrast, eccentricity/
-> crowding, and degradation (`psyvis_ml.stimuli`, `psyvis_ml.suites`), the top-level
+> run bundle (`psyvis_ml.sweep`), **three measurement suites** — contrast, degradation, and
+> distractor-robustness (`psyvis_ml.stimuli`, `psyvis_ml.suites`), the top-level
 > **`pe.measure(...)` API** (sweep → fit → threshold/slope/CI/plot), and the **comparison +
 > human-reference overlay + report-bundle** layer (`result.compare(...)`, `result.report(...)`,
 > `psyvis_ml.reference`). Still to come: real ImageNet/timm loaders and more human-reference
@@ -26,9 +26,48 @@ reports thresholds and sensitivity functions, not accuracy at one severity.
 
 ```bash
 pip install -e .            # core: numpy, scipy, matplotlib
-pip install -e ".[demo]"    # + torch, timm convenience loaders for ImageNet demos
+pip install -e ".[demo]"    # + torch, timm, Pillow convenience loaders for ImageNet demos
 pip install -e ".[dev]"     # + pytest, ruff
 ```
+
+`import psyvis_ml` and the whole fitting/measurement path work on the **core deps alone**;
+torch/timm/Pillow are imported lazily and only needed when you call the real-model helpers.
+
+## Quickstart — the human-vs-models figure
+
+The worked example ([`examples/worked_example.ipynb`](examples/worked_example.ipynb)) runs the
+whole instrument on real models end to end: load 2–3 `timm` ImageNet classifiers, sweep
+contrast, fit, and produce the human-vs-models contrast figure with the cited human CSF
+overlay.
+
+**You supply the images.** This package never bundles or downloads ImageNet. Point it at your
+own subset in ImageFolder layout (`<root>/<class>/img.JPEG`; class folders named by integer
+ImageNet index or WordNet ID):
+
+```bash
+pip install -e ".[demo]"
+export IMAGENET_DIR=/path/to/your/imagenet_subset   # your own data
+jupyter notebook examples/worked_example.ipynb
+```
+
+In code the same path is just a few lines:
+
+```python
+import psyvis_ml as pe
+
+ds = pe.datasets.imagenet_subset("/path/to/your/imagenet_subset", max_classes=5)
+models = {n: pe.models.timm_classifier(n) for n in ["resnet18", "resnet50"]}  # frozen, eval
+suite = pe.suites.ContrastThreshold(contrast_metric="rms", clip_range=(0.0, 1.0))
+levels = pe.linspace_levels(0.01, 0.5, 9, spacing="log")
+
+results = [pe.measure(model=m, suite=suite, dataset=ds, levels=levels, model_name=n)
+           for n, m in models.items()]
+fig = results[0].compare(results[1:], human="auto")   # models + cited human CSF, one axis
+results[0].report(others=results[1:], outdir="report_bundle")   # methods-ready bundle
+```
+
+`model` is just a callable `image -> logits`; `timm_classifier` is a convenience wrapper, not
+a requirement — any framework (or a plain function) works.
 
 ## The fitting core
 
@@ -87,14 +126,15 @@ model, and a comparison worth making — not a duplication.
 Once you have measured several models, `result.compare([other_a, other_b, ...])` puts their
 psychometric curves — observed points, fitted curves, thresholds, and CI bands — on **one
 axis** for a shared suite/condition (the PRD §5/§12 "killer plot"). It honours each result's
-*declared* axis direction (rising for contrast/crowding, falling for degradation) and refuses
-to overlay results from mismatched suites/conditions rather than compare apples to oranges.
+*declared* axis direction (rising for contrast/distractor-robustness, falling for degradation)
+and refuses to overlay results from mismatched suites/conditions rather than compare apples to
+oranges.
 
 Where a credible **published human curve** exists, the same axis carries a cited human
 overlay. We ship pre-collected/published human sensitivity data as static, versioned reference
 data and **never run human experiments or synthesize** a curve; where no good human data
-exists (e.g. crowding-in-natural-images, which is thin), the overlay **degrades gracefully** —
-models only, with a note — instead of fabricating one.
+exists (e.g. distractor robustness, which has no established human sensitivity curve), the
+overlay **degrades gracefully** — models only, with a note — instead of fabricating one.
 
 Shipped human reference data (`psyvis_ml.reference`, files under `reference/data/`):
 

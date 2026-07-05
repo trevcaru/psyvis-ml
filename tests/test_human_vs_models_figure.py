@@ -39,6 +39,10 @@ def test_human_vs_models_contrast_figure_renders():
     assert xs, "expected a vertical human-threshold line"
     assert np.isfinite(fig.axes[0].get_xlim()).all()
 
+    # The caption must name the PARADIGM difference, not merely "approximate" (PRD §14).
+    caption = " ".join(t.get_text().lower() for t in ax.texts)
+    assert "detection" in caption and "classification" in caption
+
     import matplotlib.pyplot as plt
     plt.close(fig)
 

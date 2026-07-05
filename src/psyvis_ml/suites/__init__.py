@@ -1,8 +1,9 @@
-"""Measurement suites: contrast threshold, eccentricity/crowding, and degradation."""
+"""Measurement suites: contrast threshold, degradation, and distractor robustness."""
 
 from .base import Condition, Suite
 from .contrast import ContrastThreshold
-from .crowding import CrowdingSuite
 from .degradation import DegradationSuite
+from .distractor import DistractorRobustness
 
-__all__ = ["Suite", "Condition", "ContrastThreshold", "CrowdingSuite", "DegradationSuite"]
+__all__ = ["Suite", "Condition", "ContrastThreshold", "DegradationSuite",
+           "DistractorRobustness"]

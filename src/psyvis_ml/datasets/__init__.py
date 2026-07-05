@@ -1,7 +1,8 @@
-"""Minimal synthetic dataset for running the API end-to-end.
+"""Datasets: a synthetic set for the analytic tests, plus an optional real ImageNet-subset
+loader for the demos (:mod:`psyvis_ml.datasets.imagenet`, behind the ``[demo]`` extra).
 
-Real ImageNet / timm loaders are intentionally out of scope for this slice. This synthetic
-set is designed to be *drivable by a contrast sweep with an analytically known threshold*:
+The synthetic set is designed to be *drivable by a contrast sweep with an analytically known
+threshold*:
 
 * Each image is a length-``num_classes`` vector ``mean + amp * (e_class - 1/num_classes)``.
   The deviation term is **zero-mean**, so ``mean(image)`` is preserved, and its argmax is the
@@ -29,6 +30,9 @@ __all__ = [
     "decode_class",
     "MEAN_BASE",
     "MEAN_SPAN",
+    "imagenet_subset",
+    "load_image",
+    "imagenet_wnid_to_index",
 ]
 
 # Mean-luminance encoding of the difficulty quantile q in [0, 1]:  mean = BASE + SPAN*(q-0.5).
@@ -96,3 +100,8 @@ def synthetic_dataset(n=400, num_classes=8, amp=0.4) -> Dataset:
         name="synthetic-contrast",
         metadata={"quantiles": quantiles, "amp": amp},
     )
+
+
+# Imported at the bottom (after Dataset is defined) to avoid a circular import; imagenet.py
+# only pulls in Pillow/timm lazily, so this keeps `import psyvis_ml` on core deps alone.
+from .imagenet import imagenet_subset, imagenet_wnid_to_index, load_image  # noqa: E402

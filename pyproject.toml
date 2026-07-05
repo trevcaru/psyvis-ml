@@ -32,10 +32,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Convenience loaders for the ImageNet models used in demos. Deliberately NOT a
+# Convenience loaders for the real ImageNet models used in demos. Deliberately NOT a
 # hard dependency: `import psyvis_ml` and the whole fitting core work with the
-# core deps alone.
-demo = ["torch>=2.0", "timm>=0.9"]
+# core deps alone; torch/timm/Pillow are imported lazily, only when these helpers are called.
+demo = ["torch>=2.0", "timm>=0.9", "pillow>=9.0"]
 dev = ["pytest>=7.4", "ruff>=0.4"]
 
 [project.urls]
@@ -47,6 +47,9 @@ packages = ["src/psyvis_ml"]
 [tool.ruff]
 line-length = 100
 src = ["src", "tests"]
+# Demo notebooks intentionally guard before importing heavy optional deps (import-after-code),
+# which is good UX but trips E402; they are artifacts, not library code, so skip linting them.
+extend-exclude = ["*.ipynb"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "NPY"]

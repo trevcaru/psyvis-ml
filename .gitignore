@@ -24,3 +24,7 @@ htmlcov/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Generated diagnostic outputs (e.g. examples/q1_ceiling_check.py, report bundles)
+outputs/
+report_bundle/
