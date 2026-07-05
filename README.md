@@ -94,7 +94,10 @@ by [`examples/generate_gallery.py`](examples/generate_gallery.py) into
 
 ![degradation comparison](outputs/gallery/degradation_comparison.png)
 
-**Distractor robustness — ceiling-limited (see caveat in `results.md`).**
+**Distractor robustness — sweep distractor size, real threshold.** A big centred target
+(clearing the recognition ceiling) with heterogeneous distractors grown from the margins;
+performance falls as distractor size grows, giving a real (non-extrapolated) threshold — the
+distractor size at criterion, gated by `calibrate_distractor_size`.
 
 ![distractor comparison](outputs/gallery/distractor_comparison.png)
 
@@ -169,7 +172,7 @@ model, and a comparison worth making — not a duplication.
 Once you have measured several models, `result.compare([other_a, other_b, ...])` puts their
 psychometric curves — observed points, fitted curves, thresholds, and CI bands — on **one
 axis** for a shared suite/condition (the PRD §5/§12 "killer plot"). It honours each result's
-*declared* axis direction (rising for contrast/distractor-robustness, falling for degradation)
+*declared* axis direction (rising for contrast, falling for degradation and distractor size)
 and refuses to overlay results from mismatched suites/conditions rather than compare apples to
 oranges.
 

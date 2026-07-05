@@ -1,72 +1,67 @@
 """Distractor-robustness suite.
 
-Sweeps distractor **spacing** around a **centred** target and fits **P(correct) vs. spacing**,
-so :meth:`~psyvis_ml.MeasureResult.threshold` reports the distractor-distance at which a
-centred target recovers criterion accuracy — a *robustness* measure, not a perceptual crowding
-zone. An optional **undistracted baseline** condition (target alone) gives the clean ceiling to
-compare against.
+Sweeps distractor **size** around a **big centred target** and fits **P(correct) vs. distractor
+size**, so :meth:`~psyvis_ml.MeasureResult.threshold` reports the distractor size at which a
+centred target's accuracy falls to criterion — a *robustness* measure. An optional
+**undistracted baseline** condition (target alone) gives the clean ceiling.
 
-Why centred (and not the earlier eccentricity/crowding framing): a diagnostic on real
-ImageNet classifiers found that whole-photo targets are only reliably recognised when large and
-central — the exact regime that leaves no room to place distractors at a peripheral
-eccentricity. Ceiling and flanker-room were mutually exclusive, so the "crowding critical
-spacing / human signature" claim was invalid for this stimulus. This suite keeps the compositor
-machinery but makes only the honest claim it supports: how a nearby distractor's distance
-degrades a centred classifier.
+Why size, not spacing. A diagnostic on real ImageNet classifiers found that whole-photo targets
+are only reliably recognised when large and central — the exact regime that leaves no room to
+move a fixed-size distractor from "close" to "clear", so a *spacing* sweep is ceiling-limited
+and returns extrapolated thresholds. This suite instead keeps the target big enough to clear the
+recognition ceiling and grows the distractors from the margins: small distractors barely
+interfere, large ones occlude the target. Performance therefore **falls** with distractor size
+(``decreasing = True``, fit with a decreasing logistic), and the threshold is a real,
+non-extrapolated distractor size at criterion.
 
 Observer-model note (PRD §14): "correct" defaults to **argmax top-1** on the composited
 stimulus — a swappable observer-model choice, not a property of the fitter, which consumes only
-``(spacing, n_correct, n_trials)``.
+``(size, n_correct, n_trials)``.
 """
 
 from __future__ import annotations
 
 import functools
 
-from ..stimuli.distractor import composite_distractor
+from ..stimuli.distractor import composite_distractor_size
 from .base import Condition
 
 __all__ = ["DistractorRobustness"]
 
 
 class DistractorRobustness:
-    """Sweep distractor spacing around a centred target and fit P(correct) vs. spacing.
+    """Sweep distractor size around a big centred target and fit P(correct) vs. size.
 
     Parameters
     ----------
-    canvas_shape
-        ``(H, W)`` of the composited canvas. Must be large enough to hold the centred target
-        and its distractors at the widest swept spacing.
-    angle
-        Layout-axis angle (radians) along which distractors are placed about the target.
-    n_distractors
-        Number of distractors per composite (default 2, one on each side).
     distractor_patch
-        Patch pasted for each distractor; defaults to a copy of the target.
+        Content pasted for each distractor (resized to the swept size). Defaults to a neutral
+        mid-gray square (an occluding distractor); pass a real image for a content distractor.
+    canvas_shape
+        ``(H, W)`` of the composited canvas — typically the model input size, e.g.
+        ``(224, 224)``. The target should be pre-sized to clear the recognition ceiling (e.g.
+        ~62% of the frame) so distractor size, not target loss, drives the curve.
+    n_distractors
+        Number of distractors placed in the margins (default 4: N, S, W, E).
     include_baseline
         If True (default), add an undistracted baseline condition (target alone).
-    position_jitter
-        Positional jitter (pixels) applied to the target centre, drawn from the sweep ``rng``.
     background
         Canvas fill value.
     """
 
-    # Spacing is a positive axis and P(correct) rises with it (distant distractors interfere
-    # less), so the Weibull is the natural family; threshold() is the distractor-distance
-    # tolerance at criterion performance.
-    sigmoid = "weibull"
+    # Performance falls as distractor size grows, so this is a *decreasing* suite fit with a
+    # decreasing logistic; threshold() is the distractor size at criterion accuracy.
+    sigmoid = "logistic"
+    decreasing = True
 
-    def __init__(self, *, canvas_shape=(96, 96), angle=0.0, n_distractors=2,
-                 distractor_patch=None, include_baseline=True, position_jitter=0.0,
-                 background=0.0):
+    def __init__(self, *, distractor_patch=None, canvas_shape=(224, 224), n_distractors=4,
+                 include_baseline=True, background=0.0):
         if len(canvas_shape) != 2:
             raise ValueError(f"canvas_shape must be (H, W); got {canvas_shape}.")
-        self.canvas_shape = tuple(int(s) for s in canvas_shape)
-        self.angle = float(angle)
-        self.n_distractors = int(n_distractors)
         self.distractor_patch = distractor_patch
+        self.canvas_shape = tuple(int(s) for s in canvas_shape)
+        self.n_distractors = int(n_distractors)
         self.include_baseline = bool(include_baseline)
-        self.position_jitter = float(position_jitter)
         self.background = float(background)
 
     def chance_level(self, num_classes: int, top_k: int) -> float:
@@ -77,20 +72,18 @@ class DistractorRobustness:
 
     def _condition(self, distracted: bool) -> Condition:
         fn = functools.partial(
-            composite_distractor,
+            composite_distractor_size,
             canvas_shape=self.canvas_shape,
-            angle=self.angle,
-            distracted=distracted,
-            n_distractors=self.n_distractors,
             distractor_patch=self.distractor_patch,
+            n_distractors=self.n_distractors,
+            distracted=distracted,
             background=self.background,
-            position_jitter=self.position_jitter,
-        )  # target_offset defaults to 0 -> centred target
+        )
         kind = "distractors" if distracted else "undistracted"
         return Condition(
             label=kind,
             apply_stimulus=fn,
-            stimulus_name=f"distractor:distracted={distracted}:n={self.n_distractors}",
+            stimulus_name=f"distractor_size:distracted={distracted}:n={self.n_distractors}",
             metadata={"distracted": distracted, "n_distractors": self.n_distractors,
                       "baseline": not distracted},
         )

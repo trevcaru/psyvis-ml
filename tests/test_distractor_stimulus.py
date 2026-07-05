@@ -5,9 +5,12 @@ import pytest
 
 from psyvis_ml.stimuli.distractor import (
     composite_distractor,
+    composite_distractor_size,
     distractor_centers,
     distractor_offsets,
+    margin_anchor_centers,
     paste_patch,
+    resize_square,
     target_center,
 )
 
@@ -142,3 +145,63 @@ def test_bad_shapes_raise():
         composite_distractor(np.ones(6), 10, None, canvas_shape=(40, 40))
     with pytest.raises(ValueError):
         composite_distractor(np.ones((4, 4)), 10, None, canvas_shape=(40,))
+
+
+# --------------------------------------------------------------------------- #
+# Size compositor: big centred target + margin distractors sized by `level`
+# --------------------------------------------------------------------------- #
+def test_resize_square_changes_size_and_keeps_channels():
+    assert resize_square(np.ones((4, 4)), 10).shape == (10, 10)
+    assert resize_square(np.ones((4, 4, 3)), 8).shape == (8, 8, 3)
+
+
+def test_margin_anchors_flush_to_edges_and_grow_inward():
+    # A size-s distractor centred at half-s from each edge sits flush and grows inward.
+    n, s = 4, 20
+    centres = margin_anchor_centers((100, 100), s, n)
+    assert len(centres) == 4
+    assert centres[0][0] == pytest.approx(s / 2.0)          # N: half a size below the top edge
+    assert centres[1][0] == pytest.approx(99 - s / 2.0)     # S: half a size above the bottom
+
+
+def test_size_compositor_centres_target_and_sizes_distractors():
+    shape = (48, 48)
+    target = np.full((16, 16), 0.7)               # big centred target
+    distractor = np.full((6, 6), -1.0)            # reserved value; resized to `level`
+    small = composite_distractor_size(target, level=4, rng=None, canvas_shape=shape,
+                                      distractor_patch=distractor, n_distractors=1)
+    big = composite_distractor_size(target, level=12, rng=None, canvas_shape=shape,
+                                    distractor_patch=distractor, n_distractors=1)
+    # Target centred and present in both.
+    assert small[24, 24] == pytest.approx(0.7)
+    # The distractor is the negative blob; its bounding-box side == the swept size.
+    for canvas, size in [(small, 4), (big, 12)]:
+        ys, xs = np.where(canvas < 0)
+        assert max(ys.max() - ys.min() + 1, xs.max() - xs.min() + 1) == size
+    # Larger distractors occlude more of the frame.
+    assert np.count_nonzero(big < 0) > np.count_nonzero(small < 0)
+
+
+def test_size_compositor_baseline_has_no_distractors():
+    shape = (48, 48)
+    target = np.full((16, 16), 0.7)
+    canvas = composite_distractor_size(target, level=12, rng=None, canvas_shape=shape,
+                                       distractor_patch=np.full((6, 6), -1.0),
+                                       n_distractors=1, distracted=False)
+    assert np.count_nonzero(canvas < 0) == 0      # undistracted baseline: target alone
+
+
+def test_size_compositor_default_gray_distractor_and_rgb():
+    target = np.zeros((16, 16, 3))
+    target[..., 1] = 0.8                            # green RGB target
+    canvas = composite_distractor_size(target, level=10, rng=None, canvas_shape=(48, 48),
+                                       distractor_patch=None, n_distractors=4)
+    assert canvas.shape == (48, 48, 3)
+    assert np.any(np.isclose(canvas, 0.5))         # default gray distractor present
+
+
+def test_size_compositor_bad_shapes_raise():
+    with pytest.raises(ValueError):
+        composite_distractor_size(np.ones(6), 8, None, canvas_shape=(48, 48))
+    with pytest.raises(ValueError):
+        composite_distractor_size(np.ones((4, 4)), 8, None, canvas_shape=(48,))

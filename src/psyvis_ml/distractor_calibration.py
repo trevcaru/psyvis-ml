@@ -1,17 +1,13 @@
-"""Calibrate the swept distractor-spacing range for the distractor-robustness suite.
+"""Calibrate the swept distractor-**size** band for the distractor-robustness suite.
 
-A useful distractor-robustness curve — distracted performance climbing from an interference
-floor back to the undistracted baseline as distractors move away — is only visible if the swept
-spacing range spans from "close enough to interfere" to "far enough to clear". Blindly
-hardcoding a pixel range can miss the transition entirely and return a flat line you cannot
-interpret.
-
-:func:`calibrate_distractor_spacing` removes that ambiguity. It measures, at a few caller-
-supplied **extreme** probe spacings, both the **undistracted baseline** (the clean ceiling) and
-the **distracted** accuracy across the probes, checks that there is both an *interference floor*
-and a *cleared ceiling*, and only then places the final swept levels across the transition. It
-returns a :class:`DistractorCalibration` describing exactly what it found. If no
-floor→ceiling transition exists in the probed range it says so (``transition_detected=False``).
+A usable distractor-robustness curve — distracted accuracy falling from a near-ceiling at small
+distractor size to an interference floor at large size — is only visible if the swept size range
+spans that ceiling→floor transition. :func:`calibrate_distractor_size` probes a few caller-
+supplied **extreme** sizes (smallest … largest), measures the undistracted baseline (the clean
+ceiling) and the distracted accuracy across the probes, checks that a *ceiling→floor difference*
+exists across the size range, and only then places the final swept sizes across the transition.
+It returns a :class:`DistractorCalibration`; if the curve is flat (no ceiling→floor difference)
+it says so (``transition_detected=False``) so a caller can stop rather than fit noise.
 
 Observer-model note (PRD §14) is inherited from the suite: "correct" is argmax top-1 on the
 composited stimulus, a swappable observer-model choice.
@@ -23,25 +19,25 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-__all__ = ["DistractorCalibration", "calibrate_distractor_spacing"]
+__all__ = ["DistractorCalibration", "calibrate_distractor_size"]
 
 
 @dataclass(frozen=True)
 class DistractorCalibration:
-    """What the spacing calibration found, and the swept levels it placed.
+    """What the size calibration found, and the swept sizes it placed.
 
-    ``transition_detected`` is True only when the tightest probe genuinely interferes (baseline
-    − floor ≥ ``transition_margin``) *and* the widest probe clears near baseline. ``levels`` is
-    the calibrated spacing grid to sweep next; when no transition is found it spans the full
-    probed range so the (flat) curve is still reported honestly.
+    ``transition_detected`` is True only when the smallest probe is near the clean ceiling and
+    the largest probe drops a real margin below it (``small_size_accuracy − large_size_accuracy
+    ≥ transition_margin``). ``levels`` is the calibrated size grid to sweep next; when no
+    transition is found it spans the full probed range so the (flat) curve is still reported.
     """
 
     chance_level: float
     baseline_ceiling: float
-    interference_floor: float
-    cleared_high: float
+    small_size_accuracy: float
+    large_size_accuracy: float
     transition_detected: bool
-    probe_spacings: np.ndarray
+    probe_sizes: np.ndarray
     probe_distracted_frac: np.ndarray
     probe_baseline_frac: np.ndarray
     low: float
@@ -53,57 +49,57 @@ class DistractorCalibration:
     def summary(self) -> str:
         return (
             f"baseline(ceiling)={self.baseline_ceiling:.3f}, "
-            f"floor={self.interference_floor:.3f}, widest-distracted={self.cleared_high:.3f}, "
-            f"chance={self.chance_level:.3f} -> transition_detected={self.transition_detected}; "
-            f"swept range [{self.low:.2f}, {self.high:.2f}] x{len(self.levels)}"
+            f"small-size={self.small_size_accuracy:.3f}, "
+            f"large-size={self.large_size_accuracy:.3f}, chance={self.chance_level:.3f} -> "
+            f"transition_detected={self.transition_detected}; "
+            f"swept sizes [{self.low:.1f}, {self.high:.1f}] x{len(self.levels)}"
         )
 
 
-def _first_upcrossing(spacings, frac, level) -> float:
-    """Interpolated spacing at which a (rising) ``frac`` first reaches ``level``.
+def _first_downcrossing(sizes, frac, level) -> float:
+    """Interpolated size at which a (falling) ``frac`` first drops to ``level``.
 
-    ``spacings`` must be ascending. Falls back to the endpoints when ``level`` is never
-    reached (returns the widest) or is already exceeded at the tightest (returns the tightest).
+    ``sizes`` must be ascending. Falls back to the endpoints when ``level`` is never reached
+    (returns the largest) or is already below it at the smallest (returns the smallest).
     """
-    spacings = np.asarray(spacings, float)
+    sizes = np.asarray(sizes, float)
     frac = np.asarray(frac, float)
-    for i in range(spacings.size):
-        if frac[i] >= level:
+    for i in range(sizes.size):
+        if frac[i] <= level:
             if i == 0:
-                return float(spacings[0])
-            x0, x1, y0, y1 = spacings[i - 1], spacings[i], frac[i - 1], frac[i]
+                return float(sizes[0])
+            x0, x1, y0, y1 = sizes[i - 1], sizes[i], frac[i - 1], frac[i]
             if y1 == y0:
                 return float(x1)
-            t = (level - y0) / (y1 - y0)
+            t = (y0 - level) / (y0 - y1)
             return float(x0 + t * (x1 - x0))
-    return float(spacings[-1])
+    return float(sizes[-1])
 
 
-def calibrate_distractor_spacing(model, dataset, *, canvas_shape, probe_spacings,
-                                 n_levels=11, spacing_scale="linear", top_k=1, seed=0,
-                                 distractor_patch=None, n_distractors=2, angle=0.0,
-                                 background=0.0, transition_margin=0.15, band_frac=0.1,
-                                 pad_frac=0.15):
-    """Probe extreme spacings, verify a floor→ceiling transition, and place the swept levels.
+def calibrate_distractor_size(model, dataset, *, canvas_shape, probe_sizes, n_levels=11,
+                              size_scale="linear", top_k=1, seed=0, distractor_patch=None,
+                              n_distractors=4, background=0.0, transition_margin=0.15,
+                              band_frac=0.1, pad_frac=0.15):
+    """Probe extreme distractor sizes, verify a ceiling→floor transition, and place the sweep.
 
     Parameters
     ----------
     model, dataset
         As for :func:`psyvis_ml.measure` — ``model`` a callable ``image -> logits`` scored
-        against ``dataset.labels`` (use **ground-truth** labels; a self-consistency label pins
-        the baseline to a trivial 1.0 and there is nothing real to clear toward).
-    canvas_shape, distractor_patch, n_distractors, angle, background
+        against ``dataset.labels`` (use **ground-truth** labels; the target should already be
+        big enough to clear the recognition ceiling).
+    canvas_shape, distractor_patch, n_distractors, background
         Passed straight to :class:`~psyvis_ml.suites.DistractorRobustness`.
-    probe_spacings
-        A short list of **extreme** candidate spacings (tight … wide) to characterize the floor
-        and ceiling. Caller-supplied and reported — never a blind hardcoded range.
-    n_levels, spacing_scale
-        Number and spacing ("linear"/"log") of the final swept levels placed across the span.
+    probe_sizes
+        A short list of **extreme** candidate distractor sizes (smallest … largest) to
+        characterize the ceiling and floor. Caller-supplied and reported.
+    n_levels, size_scale
+        Number and spacing ("linear"/"log") of the final swept sizes placed across the span.
     transition_margin
-        Minimum baseline−floor gap (and maximum baseline−widest gap) to call it a transition.
+        Minimum small-size − large-size accuracy gap to call it a ceiling→floor transition.
     band_frac, pad_frac
-        The final range is placed between where distracted crosses ``floor + band_frac*span``
-        and ``ceiling − band_frac*span``, then padded by ``pad_frac`` of that width each side.
+        The final range is placed between where distracted first drops to ``ceiling −
+        band_frac*span`` and where it reaches ``floor + band_frac*span``, then padded.
 
     Returns
     -------
@@ -112,14 +108,14 @@ def calibrate_distractor_spacing(model, dataset, *, canvas_shape, probe_spacings
     from .api import measure
     from .suites import DistractorRobustness
 
-    probe = np.sort(np.asarray(probe_spacings, dtype=float))
+    probe = np.sort(np.asarray(probe_sizes, dtype=float))
     if probe.size < 2:
-        raise ValueError("need at least two probe spacings (a tight one and a wide one).")
+        raise ValueError("need at least two probe sizes (a small one and a large one).")
     if np.any(probe <= 0):
-        raise ValueError("probe spacings must be positive (Weibull spacing axis).")
+        raise ValueError("probe sizes must be positive (a distractor size in pixels).")
 
     suite = DistractorRobustness(canvas_shape=canvas_shape, distractor_patch=distractor_patch,
-                                 n_distractors=n_distractors, angle=angle, background=background,
+                                 n_distractors=n_distractors, background=background,
                                  include_baseline=True)
     res = measure(model, suite, dataset, probe, top_k=top_k, seed=seed)
 
@@ -129,45 +125,43 @@ def calibrate_distractor_spacing(model, dataset, *, canvas_shape, probe_spacings
     distracted = np.asarray(db.n_correct, float) / np.asarray(db.n_trials, float)
     baseline = np.asarray(bb.n_correct, float) / np.asarray(bb.n_trials, float)
 
-    ceiling = float(np.mean(baseline))          # undistracted accuracy = the clean ceiling
-    floor = float(distracted[0])                 # distracted at the tightest probe
-    cleared_high = float(distracted[-1])         # distracted at the widest probe
-    span = ceiling - floor
-    interferes = span >= transition_margin
-    cleared = cleared_high >= ceiling - transition_margin
-    transition_detected = bool(interferes and cleared)
+    ceiling = float(np.mean(baseline))       # undistracted accuracy = the clean ceiling
+    small_acc = float(distracted[0])          # distracted at the smallest probe size
+    large_acc = float(distracted[-1])         # distracted at the largest probe size
+    span = small_acc - large_acc
+    transition_detected = bool(span >= transition_margin)
 
     if transition_detected:
-        low = _first_upcrossing(probe, distracted, floor + band_frac * span)
-        high = _first_upcrossing(probe, distracted, ceiling - band_frac * span)
+        low = _first_downcrossing(probe, distracted, small_acc - band_frac * span)
+        high = _first_downcrossing(probe, distracted, large_acc + band_frac * span)
         if not (high > low):  # degenerate crossing -> fall back to the full probed range
             low, high = float(probe[0]), float(probe[-1])
         pad = pad_frac * (high - low)
-        low = max(float(probe[0]) * 0.5, low - pad)  # stay positive; don't overshoot tight
+        low = max(1.0, low - pad)
         high = high + pad
-        notes = (f"transition detected: distracted floor {floor:.3f} -> baseline ceiling "
-                 f"{ceiling:.3f}; swept levels placed across the transition.")
+        notes = (f"transition detected: small-size {small_acc:.3f} -> large-size {large_acc:.3f} "
+                 f"(clean ceiling {ceiling:.3f}); swept sizes placed across the transition.")
     else:
         low, high = float(probe[0]), float(probe[-1])
-        notes = (f"NO transition in probed range (interferes={interferes}, cleared={cleared}): "
-                 f"floor {floor:.3f}, widest-distracted {cleared_high:.3f}, ceiling {ceiling:.3f}. "
-                 f"Either distractors do not interfere here, or the probe range misses the "
-                 f"transition — widen probe_spacings before concluding 'flat'.")
+        notes = (f"NO ceiling->floor transition across sizes (small {small_acc:.3f}, large "
+                 f"{large_acc:.3f}, clean ceiling {ceiling:.3f}): the curve is flat. Either the "
+                 f"distractors do not interfere or the size range misses the transition — widen "
+                 f"probe_sizes before concluding 'flat'.")
 
-    if spacing_scale == "log":
+    if size_scale == "log":
         levels = np.geomspace(low, high, n_levels)
-    elif spacing_scale == "linear":
+    elif size_scale == "linear":
         levels = np.linspace(low, high, n_levels)
     else:
-        raise ValueError(f"spacing_scale must be 'linear' or 'log'; got {spacing_scale!r}.")
+        raise ValueError(f"size_scale must be 'linear' or 'log'; got {size_scale!r}.")
 
     return DistractorCalibration(
         chance_level=float(res.chance_level),
         baseline_ceiling=ceiling,
-        interference_floor=floor,
-        cleared_high=cleared_high,
+        small_size_accuracy=small_acc,
+        large_size_accuracy=large_acc,
         transition_detected=transition_detected,
-        probe_spacings=probe,
+        probe_sizes=probe,
         probe_distracted_frac=distracted,
         probe_baseline_frac=baseline,
         low=float(low),

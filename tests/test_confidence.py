@@ -223,11 +223,11 @@ def _degradation_res():
 
 
 def _distractor_res():
-    ds = _patch_dataset(160, 8)
-    suite = DistractorRobustness(canvas_shape=(96, 96),
-                                 distractor_patch=np.full((4, 4), -1.0), include_baseline=False)
+    ds = _patch_dataset(160, 16)
+    suite = DistractorRobustness(distractor_patch=np.full((8, 8), -1.0), canvas_shape=(48, 48),
+                                 n_distractors=1, include_baseline=False)
     return pe.measure(model=syn.make_distractor_observer(NUM_CLASSES), suite=suite, dataset=ds,
-                      levels=pe.linspace_levels(6, 26, 7), seed=0)
+                      levels=pe.linspace_levels(2, 14, 7), seed=0)
 
 
 @pytest.mark.parametrize("make_res", [_contrast_res, _degradation_res, _distractor_res])

@@ -20,7 +20,7 @@ from . import datasets, models, reference, suites
 from .api import ConditionResult, MeasureResult, linspace_levels, measure
 from .comparison import compare_results, comparison_summary, confidence_comparison
 from .confidence import ConfidenceReadout, confidence_readout
-from .distractor_calibration import DistractorCalibration, calibrate_distractor_spacing
+from .distractor_calibration import DistractorCalibration, calibrate_distractor_size
 from .report import build_report
 
 try:
@@ -39,7 +39,7 @@ __all__ = [
     "confidence_readout",
     "ConfidenceReadout",
     "build_report",
-    "calibrate_distractor_spacing",
+    "calibrate_distractor_size",
     "DistractorCalibration",
     "suites",
     "datasets",

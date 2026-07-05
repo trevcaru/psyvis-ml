@@ -62,10 +62,13 @@ def main():
     outdir = os.path.join("outputs", "gallery")
     os.makedirs(outdir, exist_ok=True)
 
-    # Full-frame images for contrast/degradation; smaller targets for the distractor canvas.
+    # Full-frame images for contrast/degradation; a big (176-px, ~79% of the 224 frame) centred
+    # target for the distractor suite so it clears the recognition ceiling; a 96-px image as the
+    # heterogeneous distractor content (resized to each swept size by the compositor).
     ds_full = pe.datasets.imagenet_subset(data_dir, max_per_class=max_per_class, image_size=224)
+    ds_target = pe.datasets.imagenet_subset(data_dir, max_per_class=max_per_class, image_size=176)
     ds_small = pe.datasets.imagenet_subset(data_dir, max_per_class=max_per_class, image_size=96)
-    print(f"loaded {len(ds_full.images)} full-frame + {len(ds_small.images)} small images "
+    print(f"loaded {len(ds_full.images)} full-frame + {len(ds_target.images)} target images "
           f"from {data_dir}", flush=True)
 
     clfs = {m: pe.models.timm_classifier(m, pretrained=True) for m in model_names}
@@ -82,14 +85,15 @@ def main():
          "levels": pe.linspace_levels(0.0, 0.8, 7),
          "dataset": ds_full, "condition": None, "human": "auto",
          "comparison_name": "degradation_comparison.png"},
-        {"key": "distractor", "title": "Distractor robustness",
-         # Heterogeneous distractor (a fixed different-class patch) so overlap genuinely
-         # interferes — self-distractors are copies of the target and carry no signal.
+        {"key": "distractor", "title": "Distractor robustness (distractor size)",
+         # Big centred target + 4 heterogeneous distractors grown from the margins. Sweeping
+         # distractor SIZE (small -> large) gives a decreasing curve with a real threshold; the
+         # size band brackets the ceiling->floor transition found by calibrate_distractor_size.
          "suite": lambda: pe.suites.DistractorRobustness(
-             canvas_shape=(224, 224), include_baseline=True,
-             distractor_patch=ds_small.images[0]),
-         "levels": pe.linspace_levels(15, 80, 7),
-         "dataset": ds_small, "condition": "distractors", "human": "auto",
+             distractor_patch=ds_small.images[0], canvas_shape=(224, 224), n_distractors=4,
+             include_baseline=True),
+         "levels": pe.linspace_levels(20, 105, 9),
+         "dataset": ds_target, "condition": "distractors", "human": "auto",
          "comparison_name": "distractor_comparison.png"},
     ]
 
@@ -145,7 +149,7 @@ def main():
             return f"{x:.3g} (extrapolated)"
         return f"{x:.4g}"
 
-    lvl_range = {"contrast": (0.01, 0.5), "degradation": (0.0, 0.8), "distractor": (15.0, 80.0)}
+    lvl_range = {"contrast": (0.01, 0.5), "degradation": (0.0, 0.8), "distractor": (20.0, 105.0)}
     md = ["# psyvis-ml results gallery", "",
           f"Real Imagenette val · {len(ds_full.images)} images · models: "
           f"{', '.join(model_names)}.", "",
@@ -162,11 +166,13 @@ def main():
            "`contrast_human_vs_models.png` / `<suite>_comparison.png` (multi-model + Δ-margin "
            "panels). The human overlay is grating-detection sensitivity vs. argmax "
            "classification — different paradigms on a shared axis (see the figure caption).", "",
-           "**Distractor caveat.** Distractor-robustness on whole-photo ImageNet targets is "
-           "ceiling-limited: a centred target large enough to recognise leaves little room to "
-           "move a distractor clear on a 224-px input, so the accuracy threshold is often "
-           "extrapolated. Read the Δ-margin gradient as the robustness signal (consistent with "
-           "the project's Q1/window diagnostics).", ""]
+           "**Distractor suite (size sweep).** A big centred target (176 px, ~79% of the frame) "
+           "clears the recognition ceiling; four heterogeneous distractors grow inward from the "
+           "margins and the sweep is over distractor **size**. Performance falls as size grows "
+           "(a decreasing suite), giving a **real, non-extrapolated threshold** — the distractor "
+           "size at which accuracy hits criterion — over a band gated by "
+           "`calibrate_distractor_size`. A larger threshold means a more distractor-robust "
+           "model.", ""]
     with open(os.path.join(outdir, "results.md"), "w", encoding="utf-8") as fh:
         fh.write("\n".join(md))
 

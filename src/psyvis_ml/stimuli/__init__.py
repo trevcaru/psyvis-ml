@@ -7,13 +7,14 @@ from .degradation import (
     occlude,
     spatial_frequency_filter,
 )
-from .distractor import composite_distractor
+from .distractor import composite_distractor, composite_distractor_size
 
 __all__ = [
     "apply_contrast",
     "rms_contrast",
     "michelson_contrast",
     "composite_distractor",
+    "composite_distractor_size",
     "add_gaussian_noise",
     "gaussian_blur",
     "occlude",

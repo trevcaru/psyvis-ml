@@ -2,24 +2,23 @@
 
 Follows the sweep engine's ``apply_stimulus(image, level, rng)`` contract. The ``image`` is
 the *target patch* (whatever labeled content the model classifies); this module pastes it onto
-a larger canvas — **centred by default** — and, optionally, surrounds it with **distractor**
-patches at a controlled center-to-center **spacing**. Sweeping the spacing measures how a
-nearby distractor's *distance* degrades recognition (a robustness measurement).
+a larger canvas — **centred** — and surrounds it with **distractor** patches.
 
-* ``level`` is the distractor **spacing** (center-to-center). Tight spacing places distractors
-  in/over the target's neighbourhood; wide spacing moves them away.
-* Placement is **deterministic** given the position parameters. Any positional **jitter** draws
-  from the supplied ``rng`` (and only then), so a jitter-free run ignores ``rng`` and
-  reproduces exactly.
+Two compositors, two swept axes:
+
+* :func:`composite_distractor_size` (the one :class:`psyvis_ml.suites.DistractorRobustness`
+  uses): a **big centred target** that clears the recognition ceiling, with distractors of
+  swept **size** pasted flush against the frame margins. Small distractors sit in the margins
+  and barely interfere; large ones grow inward and occlude the target — so P(correct) *falls*
+  as the size grows (a *decreasing* suite). This is the geometry that yields a real,
+  non-extrapolated threshold on whole-photo ImageNet targets.
+* :func:`composite_distractor`: the lower-level compositor that places distractors at a
+  controlled center-to-center **spacing** about the target — kept as generic machinery.
 
 This is deliberately *not* a model of human crowding: the target is centred (no visual-field
-eccentricity) and there is no perceptual critical-spacing claim. See
-:class:`psyvis_ml.suites.DistractorRobustness`.
+eccentricity) and there is no perceptual critical-spacing claim.
 
 Geometry convention: image coordinates are ``(row, col)`` with ``row`` increasing downward.
-``angle`` is measured from the ``+col`` (horizontal) axis, so ``angle=0`` lays distractors out
-horizontally about the target. ``target_offset`` (default ``0`` = centred) shifts the target
-from fixation by ``(offset*sin(angle), offset*cos(angle))``.
 """
 
 from __future__ import annotations
@@ -31,8 +30,11 @@ __all__ = [
     "target_center",
     "distractor_offsets",
     "distractor_centers",
+    "margin_anchor_centers",
+    "resize_square",
     "paste_patch",
     "composite_distractor",
+    "composite_distractor_size",
 ]
 
 DEFAULT_BACKGROUND = 0.0
@@ -183,5 +185,85 @@ def composite_distractor(
         dp = image if distractor_patch is None else np.asarray(distractor_patch, dtype=float)
         for dc in distractor_centers(t_center, float(level), angle, n_distractors):
             paste_patch(canvas, dp, dc)
+
+    return canvas
+
+
+def resize_square(patch, size):
+    """Resize a patch to ``size × size`` (bilinear), preserving any trailing channel axis."""
+    patch = np.asarray(patch, dtype=float)
+    size = int(size)
+    if patch.shape[0] == size and patch.shape[1] == size:
+        return patch
+    from scipy.ndimage import zoom
+    factors = [size / patch.shape[0], size / patch.shape[1]] + [1.0] * (patch.ndim - 2)
+    return zoom(patch, factors, order=1)
+
+
+def margin_anchor_centers(canvas_shape, size, n_distractors) -> list[tuple[float, float]]:
+    """``(row, col)`` distractor centres flush to the frame edges (N, S, W, E, cycled).
+
+    Each centre is half a distractor-size inside its edge, so an ``size × size`` distractor sits
+    against that edge and grows *inward* (toward the centred target) as ``size`` increases.
+    """
+    h, w = canvas_shape[0], canvas_shape[1]
+    cy, cx = (h - 1) / 2.0, (w - 1) / 2.0
+    half = size / 2.0
+    edges = [(half, cx), (h - 1 - half, cx), (cy, half), (cy, w - 1 - half)]  # N, S, W, E
+    return [edges[i % len(edges)] for i in range(n_distractors)]
+
+
+def composite_distractor_size(image, level, rng=None, *, canvas_shape, distractor_patch=None,
+                              n_distractors=4, distracted=True,
+                              background=DEFAULT_BACKGROUND):
+    """Centre a target and paste ``n_distractors`` of SIZE ``level`` in the frame margins.
+
+    Parameters
+    ----------
+    image
+        The (already big) target patch, centred on the canvas as-is: a 2-D ``(H, W)`` or 3-D
+        ``(H, W, C)`` array.
+    level
+        Distractor **size** in pixels (the swept axis). Small = little interference; large =
+        distractors grow inward and occlude the target, so P(correct) falls with ``level``.
+    rng
+        Accepted for the ``apply_stimulus`` contract and ignored (placement is deterministic).
+    canvas_shape
+        ``(H, W)`` of the output canvas (typically the model input size, e.g. ``(224, 224)``).
+    distractor_patch
+        Content pasted for each distractor, resized to ``level × level``. Defaults to a neutral
+        mid-gray square (an occluding distractor) when ``None``.
+    n_distractors
+        Number of distractors placed in the margins (default 4: N, S, W, E).
+    distracted
+        If False, the target is presented alone (the undistracted baseline ceiling); ``level``
+        has no effect.
+    background
+        Canvas fill value.
+
+    Returns
+    -------
+    numpy.ndarray
+        The composited canvas of shape ``canvas_shape`` (+ channels for an RGB target).
+    """
+    image = np.asarray(image, dtype=float)
+    if image.ndim not in (2, 3):
+        raise ValueError(
+            f"target patch must be 2-D (H, W) or 3-D (H, W, C); got shape {image.shape}."
+        )
+    if len(canvas_shape) != 2:
+        raise ValueError(f"canvas_shape must be (H, W); got {canvas_shape}.")
+
+    canvas = np.full(tuple(canvas_shape) + image.shape[2:], float(background), dtype=float)
+    paste_patch(canvas, image, target_center(canvas_shape))  # centred target
+
+    size = int(round(float(level)))
+    if distracted and size >= 1 and n_distractors > 0:
+        if distractor_patch is None:
+            dp = np.full((size, size) + image.shape[2:], 0.5, dtype=float)  # neutral gray
+        else:
+            dp = resize_square(np.asarray(distractor_patch, dtype=float), size)
+        for center in margin_anchor_centers(canvas_shape, size, n_distractors):
+            paste_patch(canvas, dp, center)
 
     return canvas

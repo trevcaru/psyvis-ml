@@ -1,4 +1,4 @@
-"""Distractor-robustness suite: chance wiring, conditions, baseline, threshold recovery."""
+"""Distractor-robustness suite: size sweep, decreasing fit, chance wiring, threshold recovery."""
 
 import numpy as np
 import pytest
@@ -10,9 +10,9 @@ from psyvis_ml.suites import DistractorRobustness, Suite
 import synthetic as syn
 
 NUM_CLASSES = 8
-PATCH = 8          # class encoded as one of PATCH columns -> PATCH >= NUM_CLASSES
-CANVAS = (96, 96)
-DISTRACTOR = np.full((4, 4), -1.0)  # reserved value so the observer can locate distractors
+PATCH = 16         # target patch (centred); class encoded across columns (PATCH >= NUM_CLASSES)
+CANVAS = (48, 48)  # 16-px target centred -> [16, 32], a 16-px top margin for the distractor
+DISTRACTOR = np.full((8, 8), -1.0)  # reserved value; resized to the swept size by the compositor
 
 
 def _dataset(n=240):
@@ -20,22 +20,25 @@ def _dataset(n=240):
     return Dataset(images=images, labels=labels, num_classes=NUM_CLASSES, name="patches")
 
 
-def _measure(*, include_baseline=False, n=240, num=11, seed=1):
+def _measure(*, include_baseline=False, n=240, num=9, seed=1):
     ds = _dataset(n)
     model = syn.make_distractor_observer(NUM_CLASSES)
-    suite = DistractorRobustness(canvas_shape=CANVAS, distractor_patch=DISTRACTOR,
-                                 include_baseline=include_baseline)
-    levels = pe.linspace_levels(6, 26, num)
+    # single distractor at the top edge so the observer reads its size cleanly; sizes stay in
+    # the top margin (< 16) so the distractor never overlaps the centred target.
+    suite = DistractorRobustness(distractor_patch=DISTRACTOR, canvas_shape=CANVAS,
+                                 n_distractors=1, include_baseline=include_baseline)
+    levels = pe.linspace_levels(2, 14, num)
     return pe.measure(model=model, suite=suite, dataset=ds, levels=levels, seed=seed)
 
 
 # --------------------------------------------------------------------------- #
 # Protocol / chance level / conditions
 # --------------------------------------------------------------------------- #
-def test_satisfies_suite_protocol_and_sigmoid():
+def test_satisfies_protocol_and_decreasing_logistic():
     suite = DistractorRobustness()
     assert isinstance(suite, Suite)
-    assert suite.sigmoid == "weibull"  # spacing is a positive, rising axis
+    assert suite.sigmoid == "logistic"
+    assert suite.decreasing is True  # performance falls as distractor size grows
 
 
 def test_chance_level_is_k_over_num_classes():
@@ -68,22 +71,23 @@ def test_bad_canvas_shape_raises():
 
 
 # --------------------------------------------------------------------------- #
-# End-to-end: recover the planted distractor-distance threshold
+# End-to-end: recover the planted distractor-size threshold (decreasing curve)
 # --------------------------------------------------------------------------- #
-def test_recovers_known_distractor_threshold():
+def test_recovers_known_distractor_size_threshold():
     res = _measure()
     assert res.fit().converged
     recovered = res.threshold(0.75)
     known = syn.distractor_true_threshold(NUM_CLASSES, 0.75)
-    assert abs(recovered - known) / known < 0.12, (recovered, known)
+    assert abs(recovered - known) / known < 0.15, (recovered, known)
 
 
-def test_performance_rises_with_spacing():
+def test_performance_falls_with_size():
     res = _measure()
     frac = np.asarray(res.bundle.n_correct) / np.asarray(res.bundle.n_trials)
-    assert frac[0] < 0.4     # tight spacing -> distractor interferes, near chance
-    assert frac[-1] > 0.9    # wide spacing -> target clears
-    assert np.all(np.diff(frac) >= -0.1)  # loosely monotone increasing
+    assert frac[0] > 0.9     # small distractor -> little interference, near ceiling
+    assert frac[-1] < 0.4    # large distractor -> strong interference, near chance
+    assert np.all(np.diff(frac) <= 0.1)  # loosely monotone decreasing
+    assert res.slope(0.75) < 0.0         # decreasing curve -> negative slope
 
 
 def test_chance_level_wired_into_guess_rate():
@@ -98,4 +102,4 @@ def test_undistracted_baseline_is_flat_and_high():
     b = res.bundles[base_label]
     frac = np.asarray(b.n_correct) / np.asarray(b.n_trials)
     assert frac.min() > 0.9                      # clean ceiling everywhere
-    assert frac.max() - frac.min() < 0.1         # spacing has no effect when undistracted
+    assert frac.max() - frac.min() < 0.1         # size has no effect when undistracted

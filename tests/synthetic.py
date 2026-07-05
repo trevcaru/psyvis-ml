@@ -216,55 +216,47 @@ def decode_distractor_target(canvas):
     return cls, _q_from_base(base)
 
 
-def decode_distractor_spacing(canvas):
-    """Recover the distractor spacing from a distractor canvas (inf if undistracted).
+def decode_distractor_size(canvas):
+    """Recover the (single) distractor's size from its reserved-value blob (0 if undistracted).
 
-    Distractors are the negative-valued blobs; for two symmetric distractors at +-spacing about
-    the target, the inter-distractor centroid distance is 2*spacing, so spacing = distance / 2.
+    Distractors are the negative-valued pixels; the bounding-box side of that region is the
+    distractor size. Assumes a single distractor (``n_distractors=1``) so the box is one square.
     """
-    from scipy.ndimage import center_of_mass, label
-
     canvas = np.asarray(canvas, dtype=float)
-    lbl, n = label(canvas < 0.0)
-    if n < 2:
-        return np.inf
-    coms = np.asarray(center_of_mass(np.ones_like(canvas), lbl, range(1, n + 1)))
-    # Two blobs (n_distractors=2): half their separation is the target-to-distractor spacing.
-    d = float(np.hypot(*(coms[0] - coms[1])))
-    return d / 2.0
+    ys, xs = np.where(canvas < 0.0)
+    if ys.size == 0:
+        return 0.0
+    return float(max(ys.max() - ys.min() + 1, xs.max() - xs.min() + 1))
 
 
 # --------------------------------------------------------------------------- #
-# Distractor observer: P(correct) RISES with distractor spacing (Weibull in spacing).
+# Distractor observer: P(correct) FALLS with distractor SIZE (decreasing logistic in size).
 # --------------------------------------------------------------------------- #
-DIST_ALPHA = 12.0   # spacing scale (pixels) at which the distractor stops interfering
-DIST_BETA = 3.0
+DIST_S50 = 8.0   # distractor size (pixels) at the curve midpoint
+DIST_K = 0.8
 DIST_LAPSE = 0.02
 
 
-def distractor_p_true(spacing, num_classes, alpha=DIST_ALPHA, beta=DIST_BETA,
-                      lapse=DIST_LAPSE):
+def distractor_size_p_true(size, num_classes, s50=DIST_S50, k=DIST_K, lapse=DIST_LAPSE):
     guess = 1.0 / num_classes
-    if not np.isfinite(spacing):
+    if size <= 0:
         f = 1.0  # undistracted baseline: target at ceiling
     else:
-        f = 1.0 - np.exp(-((max(spacing, 0.0) / alpha) ** beta))
+        f = 1.0 / (1.0 + np.exp(k * (size - s50)))  # 1 at small size, 0 at large -> decreasing
     return guess + (1.0 - guess - lapse) * f
 
 
-def distractor_true_threshold(num_classes, target=0.75, alpha=DIST_ALPHA, beta=DIST_BETA,
-                              lapse=DIST_LAPSE):
+def distractor_true_threshold(num_classes, target=0.75, s50=DIST_S50, k=DIST_K, lapse=DIST_LAPSE):
     guess = 1.0 / num_classes
     f_target = (target - guess) / (1.0 - guess - lapse)
-    return alpha * (-np.log(1.0 - f_target)) ** (1.0 / beta)
+    return s50 + np.log((1.0 - f_target) / f_target) / k
 
 
-def make_distractor_observer(num_classes, alpha=DIST_ALPHA, beta=DIST_BETA,
-                             lapse=DIST_LAPSE):
+def make_distractor_observer(num_classes, s50=DIST_S50, k=DIST_K, lapse=DIST_LAPSE):
     def distractor_observer(canvas):
-        spacing = decode_distractor_spacing(canvas)
+        size = decode_distractor_size(canvas)
         cls, q = decode_distractor_target(canvas)
-        correct = q < distractor_p_true(spacing, num_classes, alpha, beta, lapse)
+        correct = q < distractor_size_p_true(size, num_classes, s50, k, lapse)
         pred = cls if correct else (cls + 1) % num_classes
         logits = np.full(num_classes, -10.0)
         logits[pred] = 10.0
