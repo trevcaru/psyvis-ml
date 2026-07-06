@@ -57,6 +57,15 @@ class DegradationSuite:
     sigmoid = "logistic"
     decreasing = True
 
+    # Axis label for the swept severity, per degradation kind.
+    _X_LABELS = {
+        "gaussian_noise": "noise σ",
+        "blur": "blur σ (px)",
+        "occlusion": "occluded fraction",
+        "lowpass": "low-pass severity",
+        "highpass": "high-pass severity",
+    }
+
     def __init__(self, kind, **params):
         if kind not in _KINDS:
             raise ValueError(
@@ -64,6 +73,8 @@ class DegradationSuite:
             )
         self.kind = kind
         self.params = dict(params)
+        #: Axis label for the swept variable (used by the plotting layer).
+        self.x_label = self._X_LABELS[kind]
 
     def chance_level(self, num_classes: int, top_k: int) -> float:
         """Chance ~= k / num_classes for top-k argmax correctness (the high-severity asymptote)."""

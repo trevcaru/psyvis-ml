@@ -108,7 +108,7 @@ def test_plot_returns_figure_no_display():
     fig = res.plot(n_boot=30, seed=0)
     assert fig.__class__.__name__ == "Figure"
     ax = fig.axes[0]
-    assert ax.get_xlabel() == "stimulus level"
+    assert ax.get_xlabel() == "RMS contrast"   # the suite's declared x_label
     assert ax.get_ylabel() == "P(correct)"
     import matplotlib.pyplot as plt
     plt.close(fig)

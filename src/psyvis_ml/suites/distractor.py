@@ -53,6 +53,8 @@ class DistractorRobustness:
     # decreasing logistic; threshold() is the distractor size at criterion accuracy.
     sigmoid = "logistic"
     decreasing = True
+    #: Axis label for the swept variable (used by the plotting layer).
+    x_label = "distractor size (px)"
 
     def __init__(self, *, distractor_patch=None, canvas_shape=(224, 224), n_distractors=4,
                  include_baseline=True, background=0.0):

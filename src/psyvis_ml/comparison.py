@@ -12,11 +12,12 @@ from __future__ import annotations
 
 import numpy as np
 
+from . import _style
 from .confidence import confidence_readout, require_relative_for_multimodel
 from .reference import REFERENCE_PEAK_SF_CPD, human_reference_for
 
 __all__ = ["compare_results", "comparison_summary", "resolve_comparison",
-           "confidence_comparison"]
+           "confidence_comparison", "plot_confidence_delta"]
 
 
 def _curve_grid(levels, sigmoid, decreasing, n=200):
@@ -190,91 +191,155 @@ def compare_results(results, *, condition=None, target=0.75, human="auto", ax=No
     """
     import matplotlib.pyplot as plt
 
+    from .plotting import threshold_ci_label
+
     condition_label, selected = resolve_comparison(results, condition)
     # Structural guard: absolute margins are never comparable across models.
     require_relative_for_multimodel(confidence_kind, len(results))
     decreasing = bool(results[0].decreasing)
     sigmoid = getattr(results[0].suite, "sigmoid", "weibull")
     suite_name = results[0].suite.__class__.__name__
+    xlabel = getattr(results[0].suite, "x_label", None) or "stimulus level"
 
-    if ax is not None:
-        fig, acc_ax, conf_ax = ax.figure, ax, None
-    elif show_confidence:
-        fig, (acc_ax, conf_ax) = plt.subplots(
-            2, 1, figsize=(6.8, 7.0), sharex=True, gridspec_kw={"height_ratios": [3, 2]})
-    else:
-        fig, acc_ax = plt.subplots(figsize=(6.5, 4.6))
-        conf_ax = None
+    with _style.rc_context():
+        if ax is not None:
+            fig, acc_ax, conf_ax = ax.figure, ax, None
+        elif show_confidence:
+            fig, (acc_ax, conf_ax) = plt.subplots(
+                2, 1, figsize=_style.FIG_COMPARE, sharex=True,
+                gridspec_kw={"height_ratios": [3, 2]})
+        else:
+            fig, acc_ax = plt.subplots(figsize=_style.FIG_ACCURACY)
+            conf_ax = None
 
-    all_levels = []
-    for model_label, cr in selected:
-        levels = np.asarray(cr.bundle.levels, dtype=float)
-        all_levels.append(levels)
-        prop = np.asarray(cr.bundle.n_correct, float) / np.asarray(cr.bundle.n_trials, float)
+        all_levels, model_thresholds = [], []
+        for i, (model_label, cr) in enumerate(selected):
+            color = _style.model_color(i)
+            levels = np.asarray(cr.bundle.levels, dtype=float)
+            all_levels.append(levels)
+            prop = np.asarray(cr.bundle.n_correct, float) / np.asarray(cr.bundle.n_trials, float)
+            xgrid = _curve_grid(levels, sigmoid, decreasing)
 
-        pts = acc_ax.scatter(levels, prop, s=28, zorder=3, label=model_label)
-        color = pts.get_facecolor()[0]
-        xgrid = _curve_grid(levels, sigmoid, decreasing)
-        acc_ax.plot(xgrid, cr.fit.predict(xgrid), color=color, lw=2, zorder=2)
+            if show_ci:
+                low, high, _frac = cr.fit.bootstrap_curve(xgrid, n_boot=n_boot, ci=ci, seed=seed)
+                if np.all(np.isfinite(low)) and np.all(np.isfinite(high)):
+                    acc_ax.fill_between(xgrid, low, high, color=color, alpha=_style.BAND_ALPHA,
+                                        lw=0, zorder=1)
 
-        if show_ci:
-            low, high, _frac = cr.fit.bootstrap_curve(xgrid, n_boot=n_boot, ci=ci, seed=seed)
-            if np.all(np.isfinite(low)) and np.all(np.isfinite(high)):
-                acc_ax.fill_between(xgrid, low, high, color=color, alpha=0.16, zorder=1)
+            thr = cr.fit.threshold(target)
+            label = model_label
+            if np.isfinite(thr):
+                model_thresholds.append(thr)
+                tlab = threshold_ci_label(thr, cr.fit, target, n_boot, ci, seed)
+                label = f"{model_label} — {tlab}"
+            acc_ax.plot(xgrid, cr.fit.predict(xgrid), color=color, lw=_style.LINE_WIDTH,
+                        zorder=2, label=label)
+            acc_ax.scatter(levels, prop, s=_style.POINT_SIZE, color=color, edgecolor="white",
+                           linewidth=0.5, zorder=3)
+            if np.isfinite(thr):
+                _style.threshold_marker(acc_ax, thr, target, color)
 
-        thr = cr.fit.threshold(target)
-        if np.isfinite(thr):
-            acc_ax.plot([thr], [target], marker="o", color=color, ms=7, mfc="white", mec=color,
-                        zorder=4)
+            if conf_ax is not None:
+                r = confidence_readout(cr.bundle, decreasing=decreasing, n_boot=n_boot, ci=ci,
+                                       seed=seed)
+                conf_ax.fill_between(levels, r.delta_ci_low, r.delta_ci_high, color=color,
+                                     alpha=_style.BAND_ALPHA, lw=0, zorder=1)
+                conf_ax.plot(levels, r.delta_margin, color=color, lw=_style.LINE_WIDTH,
+                             marker="o", ms=3.5, mec="white", mew=0.4, zorder=3)
+
+        # Human reference overlay (accuracy panel) or a graceful note when none exists.
+        human_note, has_human = None, False
+        if human in (True, "auto"):
+            spec = _human_overlay_spec(results, condition_label, selected)
+            if spec is not None:
+                has_human = True
+                ref, sf, human_thr = spec
+                acc_ax.axvline(human_thr, color=_style.HUMAN_COLOR, ls="-.", lw=1.4, zorder=5,
+                               label=(f"human {ref.human_paradigm.split('(')[0].strip()} "
+                                      f"threshold @ {sf:g} cpd"))
+                approx = "approx.; " if ref.approximate else ""
+                # The sensitivity gap goes in the caption (keeps the legend compact).
+                gap = ""
+                if model_thresholds and human_thr > 0:
+                    ratios = sorted(t / human_thr for t in model_thresholds)
+                    gap = (f" On this axis the models need ~{ratios[0]:.0f}–{ratios[-1]:.0f}× "
+                           f"more contrast than the human threshold.")
+                # Name the *paradigm* difference, not just the metric/approximation (PRD §14):
+                # human = grating DETECTION sensitivity; model = argmax CLASSIFICATION correctness.
+                human_note = (
+                    f"Human line = grating-DETECTION contrast sensitivity "
+                    f"({ref.metric}, {sf:g} cpd; {approx}see citation). "
+                    f"Model curves = argmax-CLASSIFICATION correctness. Different observer "
+                    f"paradigms on a shared contrast axis — not identical tasks.{gap}"
+                )
+            else:
+                human_note = f"No published human reference available for {suite_name}."
+
+        acc_ax.axhline(target, color=_style.REFERENCE_COLOR, ls="--", lw=0.9, zorder=0)
+        levels0 = np.concatenate(all_levels)
+        if sigmoid == "weibull" and np.all(levels0 > 0) and not decreasing:
+            acc_ax.set_xscale("log")
+            _style.decimal_log_xticks(acc_ax, float(np.min(levels0)), float(np.max(levels0)))
+        acc_ax.set_xlabel(xlabel)
+        acc_ax.set_ylabel("P(correct)")
+        acc_ax.set_ylim(0.0, 1.02)
+        # Legend in the empty corner: below rising curves, above falling ones.
+        acc_ax.legend(loc="upper right" if decreasing else "lower right")
+        default_title = (f"{suite_name} — {condition_label}: models"
+                         + (" vs. human threshold" if has_human else ""))
+        acc_ax.set_title(title or default_title)
+        _style.style_axes(acc_ax)
+        if human_note:
+            acc_ax.text(0.5, -0.16 if conf_ax is None else -0.30, human_note,
+                        transform=acc_ax.transAxes, ha="center", va="top", fontsize=7.5,
+                        color="#666666", wrap=True)
 
         if conf_ax is not None:
-            r = confidence_readout(cr.bundle, decreasing=decreasing, n_boot=n_boot, ci=ci,
-                                   seed=seed)
-            conf_ax.plot(levels, r.delta_margin, color=color, lw=2, marker="o", ms=4, zorder=3)
-            conf_ax.fill_between(levels, r.delta_ci_low, r.delta_ci_high, color=color,
-                                 alpha=0.16, zorder=1)
+            conf_ax.axhline(0.0, color=_style.REFERENCE_COLOR, ls="--", lw=0.9, zorder=0)
+            conf_ax.set_xlabel(xlabel)
+            conf_ax.set_ylabel("Δ logit margin\n(from clean baseline)")
+            conf_ax.set_title("confidence (baseline-relative Δ-margin — cross-model comparable)",
+                              fontsize=10)
+            _style.style_axes(conf_ax)
 
-    # Human reference overlay (accuracy panel) or a graceful note when none exists.
-    human_note = None
-    if human in (True, "auto"):
-        spec = _human_overlay_spec(results, condition_label, selected)
-        if spec is not None:
-            ref, sf, human_thr = spec
-            acc_ax.axvline(human_thr, color="black", ls="-.", lw=1.6, zorder=5,
-                           label=f"human {ref.human_paradigm.split('(')[0].strip()} "
-                                 f"threshold @ {sf:g} cpd")
-            approx = "approx.; " if ref.approximate else ""
-            # Name the *paradigm* difference, not just the metric/approximation (PRD §14):
-            # human = grating DETECTION sensitivity; model = argmax CLASSIFICATION correctness.
-            human_note = (
-                f"Human line = grating-DETECTION contrast sensitivity "
-                f"({ref.metric}, {sf:g} cpd; {approx}see citation). "
-                f"Model curves = argmax-CLASSIFICATION correctness. Different observer "
-                f"paradigms on a shared contrast axis — not identical tasks."
-            )
-        else:
-            human_note = f"No published human reference available for {suite_name}."
+        fig.tight_layout()
+    return fig
 
-    acc_ax.axhline(target, color="0.6", ls="--", lw=1, zorder=0)
-    levels0 = np.concatenate(all_levels)
-    if sigmoid == "weibull" and np.all(levels0 > 0) and not decreasing:
-        acc_ax.set_xscale("log")
-    acc_ax.set_xlabel("stimulus level" + ("  (higher = more degraded)" if decreasing else ""))
-    acc_ax.set_ylabel("P(correct)")
-    acc_ax.set_ylim(0.0, 1.02)
-    acc_ax.legend(loc="best", fontsize=8)
-    acc_ax.set_title(title or f"{suite_name} — {condition_label}: models vs. human")
-    if human_note:
-        acc_ax.text(0.5, -0.16 if conf_ax is None else -0.28, human_note,
-                    transform=acc_ax.transAxes, ha="center", va="top", fontsize=7, color="0.35",
-                    wrap=True)
 
-    if conf_ax is not None:
-        conf_ax.axhline(0.0, color="0.6", ls="--", lw=1, zorder=0)  # clean baseline anchor
-        conf_ax.set_xlabel("stimulus level")
-        conf_ax.set_ylabel("Δ logit margin\n(from clean baseline)")
-        conf_ax.set_title("confidence (baseline-relative Δ-margin — cross-model comparable)",
-                          fontsize=9)
+def plot_confidence_delta(results, *, condition=None, target=0.75, n_boot=300, ci=0.95, seed=0,
+                          title=None):
+    """Standalone styled figure of each model's baseline-relative Δ logit-margin curve.
 
-    fig.tight_layout()
+    The cross-model-comparable confidence view (delta only, structurally guarded). Returns a
+    matplotlib ``Figure`` in the shared publication style.
+    """
+    import matplotlib.pyplot as plt
+
+    condition_label, curves = confidence_comparison(results, condition=condition, kind="delta",
+                                                    n_boot=n_boot, ci=ci, seed=seed)
+    decreasing = bool(results[0].decreasing)
+    sigmoid = getattr(results[0].suite, "sigmoid", "weibull")
+    xlabel = getattr(results[0].suite, "x_label", None) or "stimulus level"
+    with _style.rc_context():
+        fig, ax = plt.subplots(figsize=_style.FIG_DELTA)
+        all_levels = []
+        for i, c in enumerate(curves):
+            color = _style.model_color(i)
+            all_levels.append(np.asarray(c["levels"], float))
+            ax.fill_between(c["levels"], c["delta_ci_low"], c["delta_ci_high"], color=color,
+                            alpha=_style.BAND_ALPHA, lw=0, zorder=1)
+            ax.plot(c["levels"], c["delta_margin"], color=color, lw=_style.LINE_WIDTH,
+                    marker="o", ms=4, mec="white", mew=0.4, zorder=3, label=c["model"])
+        ax.axhline(0.0, color=_style.REFERENCE_COLOR, ls="--", lw=0.9, zorder=0)
+        levels0 = np.concatenate(all_levels)
+        if sigmoid == "weibull" and np.all(levels0 > 0) and not decreasing:
+            ax.set_xscale("log")
+            _style.decimal_log_xticks(ax, float(np.min(levels0)), float(np.max(levels0)))
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel("Δ logit margin\n(from clean baseline)")
+        ax.set_title(title or "Δ logit margin (baseline-relative — cross-model comparable)",
+                     fontsize=11)
+        ax.legend(loc="best")
+        _style.style_axes(ax)
+        fig.tight_layout()
     return fig

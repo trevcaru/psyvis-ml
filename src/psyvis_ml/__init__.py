@@ -17,8 +17,14 @@ report layer. Real ImageNet/timm convenience loaders are optional (the ``[demo]`
 from importlib.metadata import PackageNotFoundError, version
 
 from . import datasets, models, reference, suites
+from .analysis import SuiteAnalysis, analyze_suite, goodness_of_fit
 from .api import ConditionResult, MeasureResult, linspace_levels, measure
-from .comparison import compare_results, comparison_summary, confidence_comparison
+from .comparison import (
+    compare_results,
+    comparison_summary,
+    confidence_comparison,
+    plot_confidence_delta,
+)
 from .confidence import ConfidenceReadout, confidence_readout
 from .distractor_calibration import DistractorCalibration, calibrate_distractor_size
 from .report import build_report
@@ -36,8 +42,12 @@ __all__ = [
     "compare_results",
     "comparison_summary",
     "confidence_comparison",
+    "plot_confidence_delta",
     "confidence_readout",
     "ConfidenceReadout",
+    "analyze_suite",
+    "SuiteAnalysis",
+    "goodness_of_fit",
     "build_report",
     "calibrate_distractor_size",
     "DistractorCalibration",

@@ -40,13 +40,43 @@ def _fill_collections(ax):
 # --------------------------------------------------------------------------- #
 # Two models on one shared axis
 # --------------------------------------------------------------------------- #
+def test_axis_labels_use_suite_x_label_and_title_human_only_when_ref_exists():
+    import matplotlib.pyplot as plt
+    a = _contrast_result(0.15, name="A")
+    b = _contrast_result(0.28, name="B")
+    cfig = a.compare([b], n_boot=20, seed=0)
+    cax = cfig.axes[0]
+    assert cax.get_xlabel() == "RMS contrast"          # the suite's declared x_label
+    assert "human" in cax.get_title().lower()          # contrast has a human reference
+    plt.close(cfig)
+
+    d1, d2 = _degradation_result(name="A"), _degradation_result(name="B", seed=2)
+    dfig = d1.compare([d2], n_boot=20, seed=0)
+    dax = dfig.axes[0]
+    assert dax.get_xlabel() == "occluded fraction"
+    assert "human" not in dax.get_title().lower()       # no human reference -> no "human" in title
+    plt.close(dfig)
+
+
+def test_x_label_falls_back_to_stimulus_level_when_suite_declares_none():
+    import matplotlib.pyplot as plt
+    a = _contrast_result(0.15, name="A")
+    # A suite instance without an x_label attribute -> generic fallback.
+    del a.suite.x_label
+    fig = a.plot(show_confidence=False, n_boot=10, seed=0)
+    assert fig.axes[0].get_xlabel() == "stimulus level"
+    plt.close(fig)
+
+
 def test_compare_two_models_shared_axis_with_ci_bands():
     a = _contrast_result(0.15, name="A")
     b = _contrast_result(0.28, name="B")
     fig = a.compare([b], n_boot=40, seed=0, show_ci=True)
     ax = fig.axes[0]
-    labels = {t.get_text() for t in ax.get_legend().get_texts()}
-    assert {"A", "B"} <= labels                       # both models on the same axis
+    labels = [t.get_text() for t in ax.get_legend().get_texts()]
+    # Each model's legend entry starts with its name and carries its θ threshold + CI.
+    assert any(lbl.startswith("A") and "θ=" in lbl for lbl in labels)
+    assert any(lbl.startswith("B") and "θ=" in lbl for lbl in labels)
     assert len(_fill_collections(ax)) >= 2            # a CI band per model
     import matplotlib.pyplot as plt
     plt.close(fig)

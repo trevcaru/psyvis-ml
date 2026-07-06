@@ -38,6 +38,8 @@ class ContrastThreshold:
         self.spatial_freqs = list(spatial_freqs) if spatial_freqs is not None else None
         self.contrast_metric = contrast_metric
         self.clip_range = clip_range
+        #: Axis label for the swept variable (used by the plotting layer).
+        self.x_label = "RMS contrast" if contrast_metric == "rms" else "Michelson contrast"
         if self.spatial_freqs is not None:
             warnings.warn(
                 "spatial-frequency conditioning is a stub (not yet implemented); the "

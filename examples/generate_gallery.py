@@ -25,24 +25,6 @@ def _slug(text):
     return re.sub(r"[^0-9a-zA-Z]+", "_", str(text)).strip("_").lower()
 
 
-def _save_delta_margin(pe, plt, results, condition, path, title, n_boot):
-    """Standalone baseline-relative Δ-margin overlay (cross-model comparable, delta-only)."""
-    _, curves = pe.confidence_comparison(results, condition=condition, kind="delta", n_boot=n_boot)
-    fig, ax = plt.subplots(figsize=(6.5, 4.2))
-    for c in curves:
-        line, = ax.plot(c["levels"], c["delta_margin"], marker="o", lw=2, ms=5, label=c["model"])
-        ax.fill_between(c["levels"], c["delta_ci_low"], c["delta_ci_high"],
-                        color=line.get_color(), alpha=0.18)
-    ax.axhline(0.0, color="0.6", ls="--", lw=1)  # clean baseline anchor
-    ax.set_xlabel("stimulus level")
-    ax.set_ylabel("Δ logit margin\n(from clean baseline)")
-    ax.set_title(title)
-    ax.legend(fontsize=8, loc="best")
-    fig.tight_layout()
-    fig.savefig(path, dpi=140, bbox_inches="tight")
-    plt.close(fig)
-
-
 def main():
     import json
 
@@ -75,17 +57,20 @@ def main():
 
     specs = [
         {"key": "contrast", "title": "Contrast sensitivity",
+         "plot_title": "Contrast sensitivity — models vs. human threshold",
          "suite": lambda: pe.suites.ContrastThreshold(contrast_metric="rms",
                                                       clip_range=(0.0, 1.0)),
          "levels": pe.linspace_levels(0.01, 0.5, 7, spacing="log"),
          "dataset": ds_full, "condition": None, "human": "auto",
          "comparison_name": "contrast_human_vs_models.png"},
         {"key": "degradation", "title": "Degradation (gaussian noise)",
+         "plot_title": "Degradation (noise σ) — models",
          "suite": lambda: pe.suites.DegradationSuite("gaussian_noise"),
          "levels": pe.linspace_levels(0.0, 0.8, 7),
          "dataset": ds_full, "condition": None, "human": "auto",
          "comparison_name": "degradation_comparison.png"},
         {"key": "distractor", "title": "Distractor robustness (distractor size)",
+         "plot_title": "Distractor robustness — models",
          # Big centred target + 4 heterogeneous distractors grown from the margins. Sweeping
          # distractor SIZE (small -> large) gives a decreasing curve with a real threshold; the
          # size band brackets the ceiling->floor transition found by calibrate_distractor_size.
@@ -98,30 +83,35 @@ def main():
     ]
 
     all_rows = []
+    analyses = {}
     for spec in specs:
         key, cond = spec["key"], spec["condition"]
         print(f"\n=== {spec['title']} ===", flush=True)
         results = []
-        for name in model_names:
+        for ci_idx, name in enumerate(model_names):
             print(f"  measuring {name} ...", flush=True)
             res = pe.measure(model=clfs[name], suite=spec["suite"](), dataset=spec["dataset"],
                              levels=spec["levels"], seed=0, model_name=name)
             results.append(res)
-            # Per-model accuracy psychometric curve (single-model, accuracy only).
-            fig = res.plot(show_confidence=False, n_boot=n_boot, seed=0)
+            # Per-model accuracy curve; color_index keeps a model's colour across all figures.
+            fig = res.plot(show_confidence=False, n_boot=n_boot, seed=0, color_index=ci_idx)
             fig.savefig(os.path.join(outdir, f"{key}_accuracy_{_slug(name)}.png"),
-                        dpi=140, bbox_inches="tight")
+                        dpi=200, bbox_inches="tight")
             plt.close(fig)
 
-        # Confidence panel (baseline-relative Δ-margin), both models.
-        _save_delta_margin(pe, plt, results, cond,
-                           os.path.join(outdir, f"{key}_confidence_delta.png"),
-                           f"{spec['title']}: Δ logit margin (baseline-relative)", n_boot)
+        # Confidence panel (baseline-relative Δ-margin), both models — production-styled.
+        dfig = pe.plot_confidence_delta(
+            results, condition=cond, n_boot=n_boot,
+            title=f"{spec['title']}: Δ logit margin (baseline-relative)")
+        dfig.savefig(os.path.join(outdir, f"{key}_confidence_delta.png"),
+                     dpi=200, bbox_inches="tight")
+        plt.close(dfig)
 
         # Multi-model comparison (accuracy + Δ-margin panels; human overlay where it exists).
         cfig = pe.compare_results(results, condition=cond, human=spec["human"], n_boot=n_boot,
-                                  seed=0)
-        cfig.savefig(os.path.join(outdir, spec["comparison_name"]), dpi=140, bbox_inches="tight")
+                                  seed=0, title=spec["plot_title"])
+        cfig.savefig(os.path.join(outdir, spec["comparison_name"]),
+                     dpi=200, bbox_inches="tight")
         plt.close(cfig)
 
         # Numbers table (threshold/CI/slope + confidence threshold/margin slope).
@@ -133,10 +123,21 @@ def main():
                   f"[{r['threshold_ci_low']:.3g},{r['threshold_ci_high']:.3g}] "
                   f"conf.threshold(margin=0)={r['confidence_threshold']:.4g}", flush=True)
 
-    # results.json + results.md
+        # Paired over-images bootstrap analysis (the analysis.md content).
+        if len(results) == 2:
+            an = pe.analyze_suite(results, condition=cond, n_boot=2000, seed=0)
+            analyses[key] = an
+            d = an.threshold_diff_ci
+            print(f"  {key}: threshold diff {an.threshold_diff:+.3g} [{d[0]:.3g}, {d[1]:.3g}] "
+                  f"-> {'RELIABLE' if an.threshold_diff_excludes_zero else 'not reliable'}",
+                  flush=True)
+
+    # results.json (raw numbers, incl. the analysis) + results.md + analysis.md
     with open(os.path.join(outdir, "results.json"), "w", encoding="utf-8") as fh:
         json.dump({"data_dir": data_dir, "models": model_names,
-                   "max_per_class": max_per_class, "rows": all_rows}, fh, indent=2, default=str)
+                   "max_per_class": max_per_class, "rows": all_rows,
+                   "analysis": {k: a.to_dict() for k, a in analyses.items()}},
+                  fh, indent=2, default=str)
 
     def _f(x):
         return "n/a" if x is None or (isinstance(x, float) and x != x) else f"{x:.4g}"
@@ -176,9 +177,83 @@ def main():
     with open(os.path.join(outdir, "results.md"), "w", encoding="utf-8") as fh:
         fh.write("\n".join(md))
 
+    _write_analysis_md(os.path.join(outdir, "analysis.md"), analyses, model_names,
+                       len(ds_full.images))
+
     print(f"\nsaved gallery to {outdir}/ "
           f"({len([f for f in os.listdir(outdir) if f.endswith('.png')])} PNGs + "
-          f"results.md + results.json)", flush=True)
+          f"results.md + results.json + analysis.md)", flush=True)
+
+
+def _write_analysis_md(path, analyses, model_names, n_images):
+    """Human-readable per-suite analysis: over-images bootstrap CIs + paired difference tests."""
+    def f(x, nd=4):
+        return "n/a" if x is None or (isinstance(x, float) and x != x) else f"{x:.{nd}g}"
+
+    ma = model_names[0]
+    mb = model_names[1] if len(model_names) > 1 else ""
+    md = [
+        "# psyvis-ml gallery — analysis", "",
+        f"Real Imagenette val · {n_images} images · models: {', '.join(model_names)}.", "",
+        "## How to read this (deterministic models)", "",
+        "These models are **deterministic**: the same image at the same stimulus level always "
+        "gives the same logits, so there is **no trial-level sampling noise** and a frequentist "
+        "t-test / p-value on \"trials\" would be fabricated. All uncertainty here comes from "
+        "**bootstrapping over the image set** — the only thing that varies is *which images* you "
+        "measured. A difference between two models is called **reliable** when the bootstrap CI "
+        "of the *paired* difference (both models recomputed on the **same** resampled images "
+        "each iteration) **excludes zero**. We report no p-values.", "",
+    ]
+    for key, an in analyses.items():
+        m = an.models
+        td_lo, td_hi = an.threshold_diff_ci
+        dm_lo, dm_hi = an.delta_margin_diff_ci
+        md += [f"## {key}", "",
+               "| metric | " + " | ".join(m) + " |", "|---|" + "---|" * len(m)]
+        md.append("| threshold | " + " | ".join(f(an.threshold[k]) for k in m) + " |")
+        md.append("| threshold 95% CI | "
+                  + " | ".join(f"[{f(an.threshold_ci[k][0])}, {f(an.threshold_ci[k][1])}]"
+                               for k in m) + " |")
+        md.append("| slope | " + " | ".join(f(an.slope[k]) for k in m) + " |")
+        md.append("| slope 95% CI | "
+                  + " | ".join(f"[{f(an.slope_ci[k][0])}, {f(an.slope_ci[k][1])}]"
+                               for k in m) + " |")
+        md.append("| fit converged | " + " | ".join(str(an.gof[k]["converged"]) for k in m)
+                  + " |")
+        md.append("| fit R² | " + " | ".join(f(an.gof[k]["r2"], 3) for k in m) + " |")
+        md.append("| at-bound params | "
+                  + " | ".join(", ".join(an.gof[k]["at_bound"]) or "—" for k in m) + " |")
+        md.append("| margin slope | " + " | ".join(f(an.margin_slope[k], 3) for k in m) + " |")
+        md.append("| Δ-margin (clean→worst) | "
+                  + " | ".join(f(an.delta_margin_endpoint[k], 3) for k in m) + " |")
+        thr_verdict = ("**reliable** (CI excludes 0)" if an.threshold_diff_excludes_zero
+                       else "not reliably different (CI includes 0)")
+        dm_verdict = ("the Δ-margin curves **diverge** (CI excludes 0)"
+                      if an.delta_margin_diff_excludes_zero
+                      else "no reliable Δ-margin divergence (CI includes 0)")
+        md += ["",
+               f"**Paired threshold difference** ({m[0]} − {m[1]}): "
+               f"**{f(an.threshold_diff)}**, 95% CI [{f(td_lo)}, {f(td_hi)}] → {thr_verdict}.",
+               "",
+               f"**Confidence divergence** — Δ-margin (clean→worst) difference "
+               f"({m[0]} − {m[1]}): {f(an.delta_margin_diff, 3)}, 95% CI "
+               f"[{f(dm_lo, 3)}, {f(dm_hi, 3)}] → {dm_verdict}.",
+               ""]
+
+    # Summary table.
+    md += ["## Summary", "",
+           f"| suite | {ma} thr | {mb} thr | diff [95% CI] | reliable? | R² ({ma}/{mb}) |",
+           "|---|---|---|---|---|---|"]
+    for key, an in analyses.items():
+        m = an.models
+        td_lo, td_hi = an.threshold_diff_ci
+        md.append(f"| {key} | {f(an.threshold[m[0]])} | {f(an.threshold[m[1]])} | "
+                  f"{f(an.threshold_diff)} [{f(td_lo)}, {f(td_hi)}] | "
+                  f"{'yes' if an.threshold_diff_excludes_zero else 'no'} | "
+                  f"{f(an.gof[m[0]]['r2'], 3)} / {f(an.gof[m[1]]['r2'], 3)} |")
+    md.append("")
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(md))
 
 
 if __name__ == "__main__":

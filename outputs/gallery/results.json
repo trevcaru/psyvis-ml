@@ -78,5 +78,241 @@
       "margin_slope": -0.28777141572798,
       "suite": "distractor"
     }
-  ]
+  ],
+  "analysis": {
+    "contrast": {
+      "suite": "ContrastThreshold",
+      "condition": "contrast[rms]",
+      "target": 0.75,
+      "decreasing": false,
+      "models": [
+        "resnet50",
+        "vit_small_patch16_224"
+      ],
+      "n_images": 200,
+      "n_boot": 2000,
+      "ci": 0.95,
+      "threshold": {
+        "resnet50": 0.04970908963348951,
+        "vit_small_patch16_224": 0.19553139932732902
+      },
+      "threshold_ci": {
+        "resnet50": [
+          0.031025396558968802,
+          0.0853621641444915
+        ],
+        "vit_small_patch16_224": [
+          0.14382145936400295,
+          0.26439611228689003
+        ]
+      },
+      "slope": {
+        "resnet50": 1.9567695251983515,
+        "vit_small_patch16_224": 1.0082427547097303
+      },
+      "slope_ci": {
+        "resnet50": [
+          1.007844373380041,
+          3.6664857337289325
+        ],
+        "vit_small_patch16_224": [
+          0.6984976920590967,
+          1.5109297334476652
+        ]
+      },
+      "margin_slope": {
+        "resnet50": NaN,
+        "vit_small_patch16_224": 99.58640285325657
+      },
+      "delta_margin_endpoint": {
+        "resnet50": -8.06121129155159,
+        "vit_small_patch16_224": -6.90582482073456
+      },
+      "gof": {
+        "resnet50": {
+          "converged": true,
+          "at_bound": [],
+          "r2": 0.7191953851707933
+        },
+        "vit_small_patch16_224": {
+          "converged": true,
+          "at_bound": [],
+          "r2": 0.844585097219877
+        }
+      },
+      "threshold_diff": -0.14582230969383952,
+      "threshold_diff_ci": [
+        -0.19541699650272307,
+        -0.10686250235862474
+      ],
+      "threshold_diff_excludes_zero": true,
+      "delta_margin_diff": -1.1553864708170298,
+      "delta_margin_diff_ci": [
+        -1.8662952542742717,
+        -0.43514712025225166
+      ],
+      "delta_margin_diff_excludes_zero": true,
+      "notes": "",
+      "metadata": {
+        "baseline_index": 6,
+        "degraded_index": 0
+      }
+    },
+    "degradation": {
+      "suite": "DegradationSuite",
+      "condition": "degradation[gaussian_noise]",
+      "target": 0.75,
+      "decreasing": true,
+      "models": [
+        "resnet50",
+        "vit_small_patch16_224"
+      ],
+      "n_images": 200,
+      "n_boot": 2000,
+      "ci": 0.95,
+      "threshold": {
+        "resnet50": 0.08668797596156233,
+        "vit_small_patch16_224": 0.12257018428469174
+      },
+      "threshold_ci": {
+        "resnet50": [
+          0.0547908486627818,
+          0.11806199155366731
+        ],
+        "vit_small_patch16_224": [
+          0.07929717784873595,
+          0.1647755682872046
+        ]
+      },
+      "slope": {
+        "resnet50": -1.5566027909657518,
+        "vit_small_patch16_224": -1.1724639387099227
+      },
+      "slope_ci": {
+        "resnet50": [
+          -1.755793815997562,
+          -1.4042887105896869
+        ],
+        "vit_small_patch16_224": [
+          -1.3334280918108559,
+          -1.0425693477185816
+        ]
+      },
+      "margin_slope": {
+        "resnet50": -31.813560412824152,
+        "vit_small_patch16_224": -15.92989272661507
+      },
+      "delta_margin_endpoint": {
+        "resnet50": -13.849678019285202,
+        "vit_small_patch16_224": -8.699850645165425
+      },
+      "gof": {
+        "resnet50": {
+          "converged": true,
+          "at_bound": [],
+          "r2": 0.9992239977079799
+        },
+        "vit_small_patch16_224": {
+          "converged": true,
+          "at_bound": [],
+          "r2": 0.9973884047117014
+        }
+      },
+      "threshold_diff": -0.03588220832312941,
+      "threshold_diff_ci": [
+        -0.06708355796701934,
+        -0.003973256490358851
+      ],
+      "threshold_diff_excludes_zero": true,
+      "delta_margin_diff": -5.149827374119777,
+      "delta_margin_diff_ci": [
+        -5.885435322984237,
+        -4.386149523360716
+      ],
+      "delta_margin_diff_excludes_zero": true,
+      "notes": "",
+      "metadata": {
+        "baseline_index": 0,
+        "degraded_index": 6
+      }
+    },
+    "distractor": {
+      "suite": "DistractorRobustness",
+      "condition": "distractors",
+      "target": 0.75,
+      "decreasing": true,
+      "models": [
+        "resnet50",
+        "vit_small_patch16_224"
+      ],
+      "n_images": 200,
+      "n_boot": 2000,
+      "ci": 0.95,
+      "threshold": {
+        "resnet50": 53.0956495480712,
+        "vit_small_patch16_224": 38.63612575801434
+      },
+      "threshold_ci": {
+        "resnet50": [
+          46.31339407586716,
+          60.48594359481223
+        ],
+        "vit_small_patch16_224": [
+          32.72175865376976,
+          44.1001755273478
+        ]
+      },
+      "slope": {
+        "resnet50": -0.014085414309184531,
+        "vit_small_patch16_224": -0.011198533617515596
+      },
+      "slope_ci": {
+        "resnet50": [
+          -0.019447864766538335,
+          -0.011412697953724326
+        ],
+        "vit_small_patch16_224": [
+          -0.012836370339596238,
+          -0.009901255548331257
+        ]
+      },
+      "margin_slope": {
+        "resnet50": -0.5079650445825914,
+        "vit_small_patch16_224": -0.28777141572798
+      },
+      "delta_margin_endpoint": {
+        "resnet50": -16.948368849754335,
+        "vit_small_patch16_224": -9.61583464515861
+      },
+      "gof": {
+        "resnet50": {
+          "converged": true,
+          "at_bound": [],
+          "r2": 0.9174856910274314
+        },
+        "vit_small_patch16_224": {
+          "converged": true,
+          "at_bound": [],
+          "r2": 0.9468471652533403
+        }
+      },
+      "threshold_diff": 14.459523790056863,
+      "threshold_diff_ci": [
+        8.541082610356776,
+        20.872263084122665
+      ],
+      "threshold_diff_excludes_zero": true,
+      "delta_margin_diff": -7.332534204595724,
+      "delta_margin_diff_ci": [
+        -8.075139987109692,
+        -6.565138022510336
+      ],
+      "delta_margin_diff_excludes_zero": true,
+      "notes": "",
+      "metadata": {
+        "baseline_index": 0,
+        "degraded_index": 8
+      }
+    }
+  }
 }
