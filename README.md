@@ -263,7 +263,11 @@ replacement. This fitter is deliberately small and dependency-light so it can be
 model-evaluation harness, and interoperating with psignifit for cross-checking fits is an
 explicit later goal.
 
-`psyvis-ml` is a reproducible sweep engine, a set of measurement suites, and human-reference overlays that point this machinery at models.
+`psyvis-ml` is a reproducible sweep engine, a set of measurement suites, and human-reference 
+overlays that point this machinery at models. No existing tool packages parametric 
+threshold-and-slope psychophysics as a reusable instrument pointed at off-the-shelf vision 
+models. The confidence-decline readout (fitting logit-margin erosion as its own curve 
+alongside accuracy) is underexplored.
 
 ## License
 
