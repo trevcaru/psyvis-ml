@@ -1,29 +1,31 @@
 # psyvis-ml
 
-**Why not just accuracy on corrupted images?** The usual robustness test (ImageNet-C and
-friends) gives you one number per corruption at one fixed severity. That tells you *that* a
-model degrades, but not the *shape* of the decline, the point where it breaks, or how steeply
-it falls off.
+**Why not just accuracy on corrupted images?** 
+
+The usual robustness test (ImageNet-C and friends) gives you one number per corruption at one 
+fixed severity. That tells you *that* a model degrades, but not the *shape* of the decline, 
+the point where it breaks, or how steeply it falls off.
 
 Two models can score the same accuracy at one severity and still have very different breaking
-points. One is declining gracefully. The other is about to fall off a cliff. A single number
-cannot tell them apart.
+points. One might decline while the other falls sharply. A single number cannot tell them apart.
 
 `psyvis-ml` treats a vision model like a subject in a vision experiment. It sweeps a stimulus
 (contrast, noise, distractor size), fits a curve of P(correct) against the stimulus level, and
-reads off a **threshold**, a **slope**, and a **confidence interval**. You get the curve, not a
-single point. That is what you need to compare models fairly, and to place a model's
-sensitivity on the same axis as a human observer's.
+reads off a **threshold**, a **slope**, and a **confidence interval**. You get the curve, instead 
+of a single point. That is a way to compare models fairly, and to place a model's sensitivity on 
+the same axis as a human observer's.
 
 ## What this measures
 
-New to this? Here is the idea in plain terms.
 
 ### Threshold
 
-Think of an eyesight test. Fade an image toward gray and watch when the model stops getting it
-right. The threshold is the contrast at which the model is correct 75% of the time. It marks
-where the model's ability breaks down.
+Think of a classic pyschophysics visual experiment. Fade an image toward gray and watch when the 
+model stops getting it right. The threshold is the contrast at which the model is correct ~75% of 
+the time. It marks where the model's ability breaks down.
+
+This is akin to calculating a detection threshold in human observers using the psychometric 
+function.
 
 A lower threshold means sharper vision. On real images, resnet50's contrast threshold (about
 0.05) is lower than vit_small's (about 0.20), so resnet50 recognizes fainter images.
@@ -50,7 +52,7 @@ edge" state that accuracy misses.
 
 Margins are not compared as raw numbers across models. Different architectures use different
 score scales, so a raw margin from resnet50 does not mean the same thing as one from vit_small.
-The tool reports each model's change from its own clean baseline instead.
+This tool reports each model's change from its own clean baseline instead.
 
 ## What is shipped
 
@@ -142,9 +144,9 @@ by [`examples/generate_gallery.py`](examples/generate_gallery.py) into
 ![degradation comparison](outputs/gallery/degradation_comparison.png)
 
 **Distractor robustness: sweep distractor size for a real threshold.** A big centred target
-(large enough to clear the recognition ceiling) is surrounded by distractors grown from the
-margins. Performance falls as distractor size grows, giving a real, non-extrapolated threshold:
-the distractor size at criterion, with the size band set by `calibrate_distractor_size`.
+(large enough to clear the recognition ceiling) is surrounded by distractors which are swept 
+with increasing size from the margins. Performance falls as distractor size grows, giving a 
+real, non-extrapolated threshold: the distractor size at criterion, with the size band set by `calibrate_distractor_size`.
 
 ![distractor comparison](outputs/gallery/distractor_comparison.png)
 
@@ -214,11 +216,11 @@ here. It is a documented, swappable observer-model choice, not a limitation of t
 observer models (top-k, a trained contrast-discrimination probe, a 2AFC pairing, a
 softmax-confidence criterion) produce the same count shape and fit identically.
 
-We name this because the closest prior art measures a different observer:
+I name this because the closest prior art measures a different observer:
 [Akbarinia et al. (2023), *Contrast Sensitivity Function in Deep Networks*](https://pubmed.ncbi.nlm.nih.gov/37156217/)
 measures DNN CSFs with a trained linear contrast-discrimination probe on frozen features, rather
-than argmax top-1 on a labeled classification set. That is a legitimate, different observer
-model, and a comparison worth making, not a duplication.
+than argmax top-1 on a labeled classification set. That is an entirely different observer model
+than this.
 
 ## Comparison, human overlays, and the report bundle
 
@@ -234,7 +236,7 @@ Where a credible published human curve exists, the same axis carries a cited hum
 ship pre-collected, published human sensitivity data as static, versioned reference data, and we
 never run human experiments or synthesize a curve. Where no good human data exists (distractor
 robustness, for example, which has no established human sensitivity curve), the overlay degrades
-gracefully to models only, with a note, instead of fabricating one.
+to models only, with a note, instead of fabricating one.
 
 Shipped human reference data lives in `psyvis_ml.reference`, with files under `reference/data/`:
 
@@ -261,9 +263,7 @@ replacement. This fitter is deliberately small and dependency-light so it can be
 model-evaluation harness, and interoperating with psignifit for cross-checking fits is an
 explicit later goal.
 
-The differentiator of `psyvis-ml` is the packaging, not the fitting math. It is a reproducible
-sweep engine, a set of measurement suites, and human-reference overlays that point this
-machinery at models.
+`psyvis-ml` is a reproducible sweep engine, a set of measurement suites, and human-reference overlays that point this machinery at models.
 
 ## License
 
