@@ -12,15 +12,30 @@ JSON sidecar of run metadata — readable **without psyvis-ml installed**. :func
 is a convenience, not a requirement; ``SCHEMA.md`` at the repo root is the contract, and
 :data:`PER_ITEM_COLUMNS` is its machine-readable form.
 
+Two margins, and you need both
+------------------------------
+``margin`` is **target-referenced** (``logit[true] − max(logit[others])``) and ``decision_margin``
+is **decision-referenced** (``logit[top-1] − logit[top-2]``). They are equal on every correct
+trial and diverge only on errors, but that divergence is the whole point:
+
+* ``margin`` answers *"how much evidence did the true class have?"* — the threshold/psychometric
+  question, which references ground truth the observer cannot see.
+* ``decision_margin`` answers *"how confident was the model in the answer it gave?"* — the
+  **type-2 / meta-d′ metacognition** question, which is about the observer's own response.
+
+``decision_margin`` **cannot be derived from this file's other columns**: it needs the runner-up
+logit, which exists only inside the sweep. That is why it is computed at export time rather than
+left to the consumer. Scoring a type-2 ROC on ``abs(margin)`` instead is a trap — on an error
+trial ``abs(margin)`` is the size of the *miss*, so as accuracy nears the floor the type-2 AUROC
+is dragged below 0.5 for definitional reasons, not because the model became confidently wrong.
+
 Discipline
 ----------
 The persisted ``margin`` is the **raw signal**: signed, with its decision boundary at ``0``
 (``margin > 0`` iff the target is the top-1 prediction). We deliberately do **not** fold it to
-``abs(margin)`` on export. Absolute value is one *scoring* choice — the natural one for
-type-2/meta-d′, where confidence is unsigned magnitude and the outcome carries the sign — and
-it is the consumer's to make. Exporting the signed value keeps both the confidence magnitude
-and the direction of evidence recoverable; exporting ``abs()`` would destroy the latter
-irreversibly.
+``abs(margin)`` on export. Absolute value is one *scoring* choice — and it is the consumer's to
+make. Exporting the signed value keeps both the confidence magnitude and the direction of
+evidence recoverable; exporting ``abs()`` would destroy the latter irreversibly.
 """
 
 from __future__ import annotations
@@ -40,6 +55,7 @@ __all__ = [
     "SCHEMA_VERSION",
     "MISSING_LABEL",
     "MARGIN_DEFINITION",
+    "DECISION_MARGIN_DEFINITION",
     "Column",
     "PerItemExport",
     "PerItemTable",
@@ -50,17 +66,34 @@ __all__ = [
 
 #: Bumped only on a breaking change to the columns or their semantics (additive columns are a
 #: minor bump; consumers must tolerate unknown extra columns).
-SCHEMA_VERSION = "1.0"
+#: 1.1 — added the ``decision_margin`` column (additive; every 1.0 column is unchanged).
+SCHEMA_VERSION = "1.1"
 
 #: Sentinel for an integer label column whose value is unavailable for this run.
 MISSING_LABEL = -1
 
 MARGIN_DEFINITION = (
-    "margin = logit[true_label] - max(logit[j] for j != true_label). Signed; decision boundary "
-    "at 0 (margin > 0 iff the true label is the top-1 prediction, so for top_k=1 "
-    "correct == (margin > 0)). Raw evidence difference, NOT a softmax probability. Logit "
+    "margin = logit[true_label] - max(logit[j] for j != true_label). TARGET-referenced. Signed; "
+    "decision boundary at 0 (margin > 0 iff the true label is the top-1 prediction, so for "
+    "top_k=1 correct == (margin > 0)). Raw evidence difference, NOT a softmax probability. Logit "
     "scales are not comparable across models: never compare raw margins between models, only "
-    "within a model (or as a change from that model's own clean baseline)."
+    "within a model (or as a change from that model's own clean baseline). This is the signal "
+    "for the psychometric/confidence-threshold curve; for a type-2 (meta-d') analysis use "
+    "decision_margin instead."
+)
+
+DECISION_MARGIN_DEFINITION = (
+    "decision_margin = logit[top-1] - logit[top-2] (winner minus runner-up). "
+    "DECISION-referenced and always >= 0: the model's confidence in the answer it ACTUALLY "
+    "GAVE, which is the type-2 / meta-d' metacognition signal. It equals margin exactly on "
+    "correct trials (the target is then the winner) and diverges only on errors, where margin "
+    "goes negative and measures the size of the miss while decision_margin stays positive and "
+    "measures confidence in the wrong answer. Do NOT substitute abs(margin) for it: on error "
+    "trials abs(margin) is the miss size, so a type-2 AUROC scored on abs(margin) is dragged "
+    "below 0.5 at floor accuracy for definitional reasons, not because the model became "
+    "confidently wrong. decision_margin cannot be reconstructed from the other columns (the "
+    "runner-up logit is not otherwise stored), which is why it is exported here. Same "
+    "per-model logit scale caveat as margin."
 )
 
 
@@ -104,8 +137,9 @@ PER_ITEM_COLUMNS: tuple[Column, ...] = (
            "the suite's DECLARED axis direction, never inferred from the data. Use this when "
            "you need a monotone severity axis without knowing the suite's units."),
     Column("margin", "float",
-           "PRIMARY CONFIDENCE SIGNAL. Signed logit margin; boundary at 0. See "
-           "MARGIN_DEFINITION / the sidecar's margin_definition."),
+           "TARGET-REFERENCED confidence signal (the threshold/psychometric one). Signed logit "
+           "margin; boundary at 0. See MARGIN_DEFINITION / the sidecar's margin_definition. For "
+           "a type-2 / meta-d' analysis use decision_margin, NOT abs(margin)."),
     Column("correct", "bool",
            "Was the true label among the model's top-k predictions? (top_k is in the "
            "sidecar; it is 1 unless stated otherwise.) Encoded as 0/1 in CSV."),
@@ -123,6 +157,14 @@ PER_ITEM_COLUMNS: tuple[Column, ...] = (
            "Max softmax probability. REFERENCE ONLY and calibration-sensitive — do not treat "
            "as a calibrated probability, and do not use it as the confidence signal in place "
            "of margin."),
+    # Appended (schema 1.1) rather than slotted next to `margin`, so every 1.0 column keeps its
+    # position and an additive bump stays additive even for a positional reader.
+    Column("decision_margin", "float",
+           "TYPE-2 METACOGNITION SIGNAL. Decision-referenced logit margin: logit[top-1] - "
+           "logit[top-2] (winner minus runner-up), always >= 0 — the model's confidence in the "
+           "answer it actually gave. Equals margin on correct trials; diverges on errors. "
+           "Cannot be derived from the other columns. See DECISION_MARGIN_DEFINITION / the "
+           "sidecar's decision_margin_definition."),
 )
 
 _COLUMN_BY_NAME = {c.name: c for c in PER_ITEM_COLUMNS}
@@ -130,6 +172,7 @@ _COLUMN_BY_NAME = {c.name: c for c in PER_ITEM_COLUMNS}
 # per_image keys on the RunBundle -> per-item column name, for the (n_levels, n_images) arrays.
 _PER_IMAGE_COLUMNS = {
     "margin": "margin",
+    "decision_margin": "decision_margin",
     "correct": "correct",
     "predicted_label": "predicted_label",
     "target_rank": "target_rank",
@@ -231,6 +274,8 @@ def per_item_rows(results) -> list[dict]:
                         "target_rank": _int_or_missing(arrays["target_rank"], li, ii),
                         "target_logit": _float_or_nan(arrays["target_logit"], li, ii),
                         "max_softmax": _float_or_nan(arrays["max_softmax"], li, ii),
+                        # NaN for a pre-1.1 / hand-built bundle that never recorded it.
+                        "decision_margin": _float_or_nan(arrays["decision_margin"], li, ii),
                     }
                     rows.append(row)
     return rows
@@ -312,6 +357,8 @@ def build_metadata(results, *, data_file: str, n_rows: int, extra=None) -> dict:
         "margin_definition": MARGIN_DEFINITION,
         "margin_boundary": 0.0,
         "margin_is_signed": True,
+        "decision_margin_definition": DECISION_MARGIN_DEFINITION,
+        "type2_confidence_column": "decision_margin",
         "missing_label": MISSING_LABEL,
         "severity_rank_definition": (
             "0 = cleanest/easiest level, n_levels-1 = most degraded/hardest, derived from the "

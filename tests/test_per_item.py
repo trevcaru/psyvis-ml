@@ -136,6 +136,62 @@ def test_margin_boundary_at_zero_matches_correctness(tmp_path):
 
 
 # --------------------------------------------------------------------------- #
+# decision_margin: the DECISION-referenced (type-2) signal, schema 1.1
+# --------------------------------------------------------------------------- #
+def test_decision_margin_equals_margin_on_correct_trials_only(tmp_path):
+    """The contract that defines the column: identical when right, divergent when wrong.
+
+    On a correct trial the target IS the winner, so "target vs. its best competitor" and
+    "winner vs. runner-up" are the same subtraction. On an error they must come apart — that
+    divergence is the entire reason the column exists, so a fixture without both kinds of trial
+    cannot test it.
+    """
+    export = write_per_item(_contrast_result(), tmp_path)
+    table = load_per_item(export.data_path)
+    margin, decision, correct = table["margin"], table["decision_margin"], table["correct"]
+
+    assert correct.any() and (~correct).any(), "fixture lacks both outcomes; test cannot bite"
+
+    # Correct trials: exactly equal (bit-for-bit through the CSV round-trip, not approx).
+    assert np.array_equal(decision[correct], margin[correct])
+    # Error trials: margin goes negative while decision_margin cannot, so they always differ.
+    # (Not `decision > 0`: this observer sets every competitor to the same logit, so on an error
+    # the winner and runner-up tie and decision_margin is legitimately 0. Non-negativity and the
+    # strict inequality below are the real contract; a positive value is not.)
+    assert np.all(margin[~correct] < 0)
+    assert np.all(decision[~correct] >= 0)
+    assert np.all(decision[~correct] > margin[~correct])
+
+
+def test_decision_margin_is_non_negative_everywhere(tmp_path):
+    """Winner minus runner-up cannot be negative, on any trial, at any level."""
+    export = write_per_item([_contrast_result(), _degradation_result()], tmp_path)
+    table = load_per_item(export.data_path)
+    assert np.all(table["decision_margin"] >= 0)
+
+
+def test_decision_margin_is_documented_as_the_type2_signal(tmp_path):
+    """The file must tell a consumer which column to score a type-2 ROC on."""
+    export = write_per_item(_contrast_result(), tmp_path)
+    table = load_per_item(export.data_path)
+    assert table.metadata["type2_confidence_column"] == "decision_margin"
+    assert "meta-d" in table.metadata["decision_margin_definition"]
+    # And it warns off the trap it exists to prevent.
+    assert "abs(margin)" in table.metadata["decision_margin_definition"]
+
+
+def test_decision_margin_is_nan_for_a_bundle_that_never_recorded_it(tmp_path):
+    """A pre-1.1 / hand-built bundle must still export, with the new column as NaN — not fail."""
+    res = _contrast_result()
+    bundle = res.condition_results[0].bundle
+    bundle.per_image.pop("decision_margin")     # simulate a bundle written before schema 1.1
+
+    table = load_per_item(write_per_item(res, tmp_path).data_path)
+    assert np.all(np.isnan(table["decision_margin"]))
+    assert not np.any(np.isnan(table["margin"]))   # the 1.0 columns are untouched
+
+
+# --------------------------------------------------------------------------- #
 # Severity axis: declared by the suite, not inferred from the data
 # --------------------------------------------------------------------------- #
 def test_severity_rank_follows_the_declared_axis_direction():

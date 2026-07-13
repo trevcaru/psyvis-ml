@@ -183,12 +183,17 @@ def run_sweep(
     n_classes = int(results[0][2]) if results else 0
     n_trials = tuple(n_images for _ in levels)
 
-    # Per-image confidence signals, stacked to (n_levels, n_images). The margin is the primary
-    # signal; rank/target-logit/max-softmax are recorded too (softmax reference-only). The
-    # margin is stored SIGNED (boundary at 0) — folding it into an unsigned confidence is a
-    # consumer's decision, not the sweep's.
+    # Per-image confidence signals, stacked to (n_levels, n_images). Both margins are recorded:
+    # `margin` (target-referenced, SIGNED, boundary at 0) drives the threshold/confidence curves,
+    # and `decision_margin` (winner minus runner-up, >= 0) is the decision-referenced type-2
+    # signal. Neither can be recovered from the other after the fact — the runner-up logit is
+    # gone once the sweep discards the logit vector — so both are captured here, at the only
+    # point where the full vector exists. Folding `margin` into an unsigned confidence remains a
+    # consumer's decision, not the sweep's. Rank/target-logit/max-softmax follow (softmax
+    # reference-only).
     per_image = {
         "margin": np.vstack([r[3].margin for r in results]),
+        "decision_margin": np.vstack([r[3].decision_margin for r in results]),
         "target_rank": np.vstack([r[3].target_rank for r in results]),
         "target_logit": np.vstack([r[3].target_logit for r in results]),
         "max_softmax": np.vstack([r[3].max_softmax for r in results]),
