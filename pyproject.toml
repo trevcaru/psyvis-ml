@@ -56,8 +56,9 @@ select = ["E", "F", "I", "UP", "B", "NPY"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["psyvis_ml"]
-# The test helper module lives alongside the tests, not in the package.
-known-local-folder = ["synthetic"]
+# Helper modules that live alongside their scripts rather than in the package: the tests'
+# `synthetic` observers, and the examples' shared type-2 scoring rig.
+known-local-folder = ["synthetic", "type2_common"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
