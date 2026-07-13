@@ -37,7 +37,14 @@
       "Bash(python -m pip install -e \".[demo]\")",
       "Bash(echo \"install: $?\")",
       "Bash(python -c \"import os; d=os.environ.get\\('PSYVIS_IMAGENET_DIR'\\); print\\('PSYVIS_IMAGENET_DIR:', repr\\(d\\), '| isdir:', bool\\(d and os.path.isdir\\(d\\)\\)\\)\")",
-      "Bash(python examples/q1_window_check.py)"
+      "Bash(python examples/q1_window_check.py)",
+      "PowerShell(python -m pytest tests/test_per_item.py -q 2>&1)",
+      "PowerShell(python -m pytest -q 2>&1)",
+      "PowerShell(python -m ruff check src tests examples)",
+      "PowerShell(python \"C:\\\\Users\\\\glopu\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-glopu-OneDrive-Desktop-Experiments-psyvis-ml\\\\3fac0dfd-0782-41a9-a76e-58adca6fdf94\\\\scratchpad\\\\demo_sweep.py\")",
+      "PowerShell(git commit -q -F \"C:\\\\Users\\\\glopu\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-glopu-OneDrive-Desktop-Experiments-psyvis-ml\\\\3fac0dfd-0782-41a9-a76e-58adca6fdf94\\\\scratchpad\\\\msg2.txt\")",
+      "PowerShell(git add SCHEMA.md README.md src/psyvis_ml/report.py examples/generate_gallery.py)",
+      "PowerShell(git commit -q -F \"C:\\\\Users\\\\glopu\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-glopu-OneDrive-Desktop-Experiments-psyvis-ml\\\\3fac0dfd-0782-41a9-a76e-58adca6fdf94\\\\scratchpad\\\\msg3.txt\")"
     ]
   }
 }
