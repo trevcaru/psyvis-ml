@@ -27,6 +27,13 @@ from .comparison import (
 )
 from .confidence import ConfidenceReadout, confidence_readout
 from .distractor_calibration import DistractorCalibration, calibrate_distractor_size
+from .per_item import (
+    PER_ITEM_COLUMNS,
+    PerItemTable,
+    load_per_item,
+    per_item_rows,
+    write_per_item,
+)
 from .report import build_report
 
 try:
@@ -49,6 +56,11 @@ __all__ = [
     "SuiteAnalysis",
     "goodness_of_fit",
     "build_report",
+    "write_per_item",
+    "load_per_item",
+    "per_item_rows",
+    "PerItemTable",
+    "PER_ITEM_COLUMNS",
     "calibrate_distractor_size",
     "DistractorCalibration",
     "suites",
