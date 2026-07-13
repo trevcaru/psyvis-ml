@@ -69,11 +69,38 @@ This is early development. What works today:
   `result.confidence(...)`.
 - **Comparison, human overlays, and reports**: `result.compare(...)`, `result.report(...)`, and
   `psyvis_ml.reference`.
+- **Per-item export** (`psyvis_ml.per_item`): the trial-level artifact — one row per
+  (item × stimulus level × condition × model) with the signed logit margin and the correctness
+  bit. See [Per-item data](#per-item-data-the-trial-level-artifact) and
+  [`SCHEMA.md`](SCHEMA.md).
 - **Results gallery** (`examples/generate_gallery.py`): standing figures plus `results.md`,
-  `results.json`, and `analysis.md` with paired bootstrap difference tests.
+  `results.json`, `analysis.md` with paired bootstrap difference tests, and `per_item.csv`.
 
 Still to come: more human-reference curves, adaptive staircases, Bayesian fitting, and
 meta-d'/type-2 scoring.
+
+## Per-item data (the trial-level artifact)
+
+`results.json` is **aggregate**: per-level `(n_correct, n_trials)` counts and fits. That is
+enough for a threshold, but not for anything that needs to pair a *confidence* with an
+*outcome* trial by trial — meta-d′, type-2 ROC, folded confidence distributions. The sweep
+already computes both (it sees the full logit vector per image per level), so a normal run now
+also persists them:
+
+```python
+result = pe.measure(model=..., suite=..., dataset=..., levels=...)
+export = result.write_per_item("outdir")     # outdir/per_item.csv + per_item.meta.json
+table  = pe.load_per_item(export.data_path)  # or just pandas.read_csv — it is a plain file
+```
+
+The file is written automatically by `result.report(...)` and by the gallery. It is
+**additive**: the aggregate outputs are unchanged.
+
+The persisted `margin` is `logit[true_label] − max(logit[others])`, kept **signed**, with its
+decision boundary at **0** (`margin > 0` iff the true label is top-1). psyvis-ml never applies
+`abs()` on export — folding the margin into an unsigned confidence is a *scoring* decision for
+the consumer, and the signed value keeps both the magnitude and the direction of evidence
+recoverable. Full column-by-column contract: [`SCHEMA.md`](SCHEMA.md).
 
 ## Install
 

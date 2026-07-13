@@ -4,7 +4,9 @@ Produces a committed ``outputs/gallery/`` folder: per suite (contrast, degradati
 robustness) and per model (resnet50 + a ViT), the accuracy psychometric curve, the baseline-
 relative Δ-margin confidence panel, and the multi-model comparison figure; for contrast, the
 human-vs-models overlay with the paradigm-difference caption. Plus ``results.md`` / ``results.json``
-with thresholds, CIs, slopes, confidence thresholds, and margin slopes.
+with thresholds, CIs, slopes, confidence thresholds, and margin slopes — and ``per_item.csv`` /
+``per_item.meta.json``, the trial-level export (one row per item × level × condition × model,
+signed logit margin + correctness) that the aggregate numbers cannot reconstruct (see SCHEMA.md).
 
 Run locally against YOUR Imagenette val (never bundled/downloaded here):
 
@@ -83,6 +85,7 @@ def main():
     ]
 
     all_rows = []
+    all_results = []   # every MeasureResult, for the trial-level per-item export
     analyses = {}
     for spec in specs:
         key, cond = spec["key"], spec["condition"]
@@ -93,6 +96,7 @@ def main():
             res = pe.measure(model=clfs[name], suite=spec["suite"](), dataset=spec["dataset"],
                              levels=spec["levels"], seed=0, model_name=name)
             results.append(res)
+            all_results.append(res)
             # Per-model accuracy curve; color_index keeps a model's colour across all figures.
             fig = res.plot(show_confidence=False, n_boot=n_boot, seed=0, color_index=ci_idx)
             fig.savefig(os.path.join(outdir, f"{key}_accuracy_{_slug(name)}.png"),
@@ -139,6 +143,18 @@ def main():
                    "analysis": {k: a.to_dict() for k, a in analyses.items()}},
                   fh, indent=2, default=str)
 
+    # per_item.csv + per_item.meta.json — the TRIAL-LEVEL artifact, alongside (not instead of)
+    # the aggregate results.json above. One row per item x level x condition x model, carrying
+    # the signed logit margin + correctness: the pairing a type-2 / meta-d' analysis needs and
+    # the aggregate counts cannot reconstruct. Schema: SCHEMA.md.
+    export = pe.write_per_item(
+        all_results, outdir,
+        extra_metadata={"data_dir": data_dir, "max_per_class": max_per_class,
+                        "gallery_suites": [s["key"] for s in specs]},
+    )
+    print(f"\nper-item export: {export.data_path} ({export.n_rows} rows) "
+          f"+ {export.metadata_path.name}", flush=True)
+
     def _f(x):
         return "n/a" if x is None or (isinstance(x, float) and x != x) else f"{x:.4g}"
 
@@ -182,7 +198,7 @@ def main():
 
     print(f"\nsaved gallery to {outdir}/ "
           f"({len([f for f in os.listdir(outdir) if f.endswith('.png')])} PNGs + "
-          f"results.md + results.json + analysis.md)", flush=True)
+          f"results.md + results.json + analysis.md + per_item.csv)", flush=True)
 
 
 def _write_analysis_md(path, analyses, model_names, n_images):

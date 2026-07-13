@@ -34,10 +34,16 @@ class ReportBundle:
     metadata: dict = field(default_factory=dict)
     summary_rows: list = field(default_factory=list)
     markdown: str = ""
+    #: The trial-level export written next to the aggregate metadata (None if the sweeps
+    #: recorded no per-image signals). See :mod:`psyvis_ml.per_item`.
+    per_item: object = None
 
     def artifacts(self) -> list[Path]:
         """All files written, for a quick existence check."""
-        return [self.markdown_path, self.metadata_path, *self.figure_paths.values()]
+        paths = [self.markdown_path, self.metadata_path, *self.figure_paths.values()]
+        if self.per_item is not None:
+            paths += self.per_item.artifacts()
+        return paths
 
 
 def _slug(text: str) -> str:
@@ -106,6 +112,40 @@ def _repro_md(model_meta):
     return "\n".join(lines) + "\n"
 
 
+def _per_item_md(per_item):
+    """The trial-level section: what the per-item file is, and the one rule for reading it."""
+    if per_item is None:
+        return ("No trial-level export: these sweeps recorded no per-image signals.\n")
+    return (
+        f"The tables above are **aggregate** (per-level counts and fits) and cannot "
+        f"reconstruct a trial-level analysis. `{per_item.data_path.name}` "
+        f"({per_item.n_rows} rows, schema v{per_item.metadata['schema_version']}) carries the "
+        f"data that can: one row per (item × stimulus level × condition × model), with the "
+        f"**signed** logit margin paired with the correctness bit, plus the true and predicted "
+        f"labels. Its sidecar `{per_item.metadata_path.name}` holds the run metadata (seed, "
+        f"config hash, library versions) and the column schema.\n\n"
+        f"The margin is persisted **signed**, with its decision boundary at **0** "
+        f"(`margin > 0` iff the true label is top-1). Folding it into an unsigned confidence "
+        f"(e.g. `abs(margin)` for a type-2/meta-d′ analysis) is a scoring choice left to the "
+        f"consumer — the raw, sign-preserving signal is what is written here. See `SCHEMA.md`.\n"
+    )
+
+
+def _write_per_item_if_possible(results, directory):
+    """Write the trial-level export into the bundle; skip (return None) if not recordable.
+
+    Every sweep produced by :func:`~psyvis_ml.measure` records the per-image signals, so this
+    writes in the normal path. A hand-built bundle without them is not an error here — the
+    report is still valid, it just has no trial-level artifact to ship.
+    """
+    from .per_item import write_per_item
+
+    try:
+        return write_per_item(results, directory)
+    except ValueError:
+        return None
+
+
 def build_report(result, *, others=None, outdir=None, condition=None, target=0.75,
                  human="auto", n_boot=400, ci=0.95, seed=0, title=None,
                  dpi=140):
@@ -161,6 +201,11 @@ def build_report(result, *, others=None, outdir=None, condition=None, target=0.7
     plt.close(cfig)
     figure_paths["comparison"] = comparison_path
 
+    # The trial-level artifact: one row per (item x level x condition x model), carrying the
+    # signed logit margin + correctness. Additive — the aggregate metadata.json below is
+    # unchanged; this is the data the aggregate cannot reconstruct (type-2 / meta-d').
+    per_item = _write_per_item_if_possible(results, directory)
+
     # Reproducibility metadata + human citation.
     model_meta = [_model_metadata(r, i) for i, r in enumerate(results)]
     ref = human_reference_for(suite_name)
@@ -183,6 +228,12 @@ def build_report(result, *, others=None, outdir=None, condition=None, target=0.7
         "summary_rows": rows,
         "human_reference": human_meta,
         "figures": {k: str(v.relative_to(directory)) for k, v in figure_paths.items()},
+        "per_item": None if per_item is None else {
+            "data": per_item.data_path.name,
+            "metadata": per_item.metadata_path.name,
+            "n_rows": per_item.n_rows,
+            "schema_version": per_item.metadata["schema_version"],
+        },
     }
     metadata_path = directory / "metadata.json"
     metadata_path.write_text(json.dumps(metadata, indent=2, default=str), encoding="utf-8")
@@ -221,6 +272,9 @@ def build_report(result, *, others=None, outdir=None, condition=None, target=0.7
         "curve in the comparison figure (each model normalized to its own clean baseline); the "
         "confidence readout is descriptive and is **not** fit through the binomial core.",
         "",
+        "## Trial-level data",
+        "",
+        _per_item_md(per_item),
         "## Reproducibility",
         "",
         "Every sweep is captured as an auditable run bundle. To reproduce a row, re-run the "
@@ -264,4 +318,5 @@ def build_report(result, *, others=None, outdir=None, condition=None, target=0.7
         metadata=metadata,
         summary_rows=rows,
         markdown=markdown,
+        per_item=per_item,
     )
