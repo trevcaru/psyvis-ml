@@ -25,7 +25,14 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# Generated diagnostic outputs (e.g. report bundles) — but keep the committed results gallery.
+# Generated diagnostic outputs (e.g. report bundles) — but keep the committed results gallery
+# and the real per-item exports. Those per_item.csv files are measured DATA, not a rendering:
+# they are the trial-level artifact downstream type-2 work reads, they take minutes of real
+# model inference to reproduce, and pinning them makes a result auditable against the exact rows
+# it came from. The figures are regenerated from these CSVs and stay ignored.
 /outputs/*
 !/outputs/gallery/
+!/outputs/real_contrast_type2/
+!/outputs/real_degradation_type2/
+!/outputs/real_distractor_type2/
 report_bundle/

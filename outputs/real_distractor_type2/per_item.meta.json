@@ -1,0 +1,308 @@
+{
+  "generated_by": "psyvis-ml",
+  "artifact": "per_item",
+  "schema_version": "1.1",
+  "data_file": "per_item.csv",
+  "n_rows": 8400,
+  "library_versions": {
+    "psyvis_ml": "0.0.1",
+    "python": "3.11.0",
+    "numpy": "2.3.0",
+    "scipy": "1.15.3"
+  },
+  "margin_definition": "margin = logit[true_label] - max(logit[j] for j != true_label). TARGET-referenced. Signed; decision boundary at 0 (margin > 0 iff the true label is the top-1 prediction, so for top_k=1 correct == (margin > 0)). Raw evidence difference, NOT a softmax probability. Logit scales are not comparable across models: never compare raw margins between models, only within a model (or as a change from that model's own clean baseline). This is the signal for the psychometric/confidence-threshold curve; for a type-2 (meta-d') analysis use decision_margin instead.",
+  "margin_boundary": 0.0,
+  "margin_is_signed": true,
+  "decision_margin_definition": "decision_margin = logit[top-1] - logit[top-2] (winner minus runner-up). DECISION-referenced and always >= 0: the model's confidence in the answer it ACTUALLY GAVE, which is the type-2 / meta-d' metacognition signal. It equals margin exactly on correct trials (the target is then the winner) and diverges only on errors, where margin goes negative and measures the size of the miss while decision_margin stays positive and measures confidence in the wrong answer. Do NOT substitute abs(margin) for it: on error trials abs(margin) is the miss size, so a type-2 AUROC scored on abs(margin) is dragged below 0.5 at floor accuracy for definitional reasons, not because the model became confidently wrong. decision_margin cannot be reconstructed from the other columns (the runner-up logit is not otherwise stored), which is why it is exported here. Same per-model logit scale caveat as margin.",
+  "type2_confidence_column": "decision_margin",
+  "missing_label": -1,
+  "severity_rank_definition": "0 = cleanest/easiest level, n_levels-1 = most degraded/hardest, derived from the suite's declared axis_direction (decreasing: higher stimulus_level is worse; increasing: higher stimulus_level is better).",
+  "axis_direction": "decreasing",
+  "columns": [
+    {
+      "name": "model",
+      "dtype": "str",
+      "description": "Model identifier (MeasureResult.model_name). Rows from different models are distinguished by this column alone."
+    },
+    {
+      "name": "suite",
+      "dtype": "str",
+      "description": "Measurement suite class name (e.g. ContrastThreshold, DegradationSuite)."
+    },
+    {
+      "name": "condition",
+      "dtype": "str",
+      "description": "Condition/slice label within the suite (e.g. 'distractors', 'baseline'). One sweep \u2014 and one psychometric fit \u2014 per (model, suite, condition)."
+    },
+    {
+      "name": "config_hash",
+      "dtype": "str",
+      "description": "SHA-256 config hash of the sweep this row came from; joins the row to its entry in the sidecar's 'runs' list."
+    },
+    {
+      "name": "item_id",
+      "dtype": "str",
+      "description": "Stable identifier for the source image. Falls back to the decimal image index when the dataset supplied no ids. The same item_id appears once per stimulus level (method of constant stimuli: every item is shown at every level)."
+    },
+    {
+      "name": "item_index",
+      "dtype": "int",
+      "description": "Zero-based positional index of the image within the dataset."
+    },
+    {
+      "name": "level_index",
+      "dtype": "int",
+      "description": "Zero-based index of the stimulus level within the swept level list (in the order the levels were swept, which is the order in the sidecar's 'levels')."
+    },
+    {
+      "name": "stimulus_level",
+      "dtype": "float",
+      "description": "The stimulus level in the suite's native units (RMS contrast, noise sigma, distractor size in px, ...). Its direction is NOT self-evident \u2014 see severity_rank and the sidecar's axis_direction."
+    },
+    {
+      "name": "severity_rank",
+      "dtype": "int",
+      "description": "Direction-aware ordinal position of this level on the clean -> degraded axis: 0 is the cleanest/easiest level, n_levels-1 the most degraded/hardest. Derived from the suite's DECLARED axis direction, never inferred from the data. Use this when you need a monotone severity axis without knowing the suite's units."
+    },
+    {
+      "name": "margin",
+      "dtype": "float",
+      "description": "TARGET-REFERENCED confidence signal (the threshold/psychometric one). Signed logit margin; boundary at 0. See MARGIN_DEFINITION / the sidecar's margin_definition. For a type-2 / meta-d' analysis use decision_margin, NOT abs(margin)."
+    },
+    {
+      "name": "correct",
+      "dtype": "bool",
+      "description": "Was the true label among the model's top-k predictions? (top_k is in the sidecar; it is 1 unless stated otherwise.) Encoded as 0/1 in CSV."
+    },
+    {
+      "name": "true_label",
+      "dtype": "int",
+      "description": "True class index of the item, or -1 if unavailable."
+    },
+    {
+      "name": "predicted_label",
+      "dtype": "int",
+      "description": "The model's top-1 class index (argmax of the logit vector), or -1 if unavailable. Present here so a future binary/2AFC meta-d' can recover the response, not just its correctness."
+    },
+    {
+      "name": "target_rank",
+      "dtype": "int",
+      "description": "Rank of the true class in the logit vector; 1 == the true class is top-1."
+    },
+    {
+      "name": "target_logit",
+      "dtype": "float",
+      "description": "Raw logit assigned to the true class (arbitrary per-model scale)."
+    },
+    {
+      "name": "max_softmax",
+      "dtype": "float",
+      "description": "Max softmax probability. REFERENCE ONLY and calibration-sensitive \u2014 do not treat as a calibrated probability, and do not use it as the confidence signal in place of margin."
+    },
+    {
+      "name": "decision_margin",
+      "dtype": "float",
+      "description": "TYPE-2 METACOGNITION SIGNAL. Decision-referenced logit margin: logit[top-1] - logit[top-2] (winner minus runner-up), always >= 0 \u2014 the model's confidence in the answer it actually gave. Equals margin on correct trials; diverges on errors. Cannot be derived from the other columns. See DECISION_MARGIN_DEFINITION / the sidecar's decision_margin_definition."
+    }
+  ],
+  "runs": [
+    {
+      "model": "resnet50",
+      "suite": "DistractorRobustness",
+      "condition": "distractors",
+      "config_hash": "b57ca9789e115831c0960d70e9be712e73e32465b354ea7733954bd22cb23726",
+      "seed": 0,
+      "library_version": "0.0.1",
+      "top_k": 1,
+      "chance_level": 0.001,
+      "axis_direction": "decreasing",
+      "levels": [
+        20.0,
+        34.166666666666664,
+        48.33333333333333,
+        62.5,
+        76.66666666666666,
+        90.83333333333333,
+        105.0
+      ],
+      "n_correct": [
+        252,
+        250,
+        247,
+        232,
+        120,
+        21,
+        0
+      ],
+      "n_trials": [
+        300,
+        300,
+        300,
+        300,
+        300,
+        300,
+        300
+      ],
+      "n_images": 300,
+      "n_classes": 1000,
+      "data_fingerprint": "63fc51ff08d7503409c9082a08798e23b8a7ab000ce4900f1356a3610f61e3d2",
+      "stimulus": "distractor_size:distracted=True:n=4",
+      "sigmoid": "logistic"
+    },
+    {
+      "model": "resnet50",
+      "suite": "DistractorRobustness",
+      "condition": "undistracted",
+      "config_hash": "690f9358504f23716df04f0ed93d10f8574c2b61b41e972214f5be97fb8851b0",
+      "seed": 0,
+      "library_version": "0.0.1",
+      "top_k": 1,
+      "chance_level": 0.001,
+      "axis_direction": "decreasing",
+      "levels": [
+        20.0,
+        34.166666666666664,
+        48.33333333333333,
+        62.5,
+        76.66666666666666,
+        90.83333333333333,
+        105.0
+      ],
+      "n_correct": [
+        249,
+        249,
+        249,
+        249,
+        249,
+        249,
+        249
+      ],
+      "n_trials": [
+        300,
+        300,
+        300,
+        300,
+        300,
+        300,
+        300
+      ],
+      "n_images": 300,
+      "n_classes": 1000,
+      "data_fingerprint": "63fc51ff08d7503409c9082a08798e23b8a7ab000ce4900f1356a3610f61e3d2",
+      "stimulus": "distractor_size:distracted=False:n=4",
+      "sigmoid": "logistic"
+    },
+    {
+      "model": "vit_small_patch16_224",
+      "suite": "DistractorRobustness",
+      "condition": "distractors",
+      "config_hash": "81072c7a4700b8b2f0ef8e2adbeef47284db8500f5e8537f4fba0fe666801e8f",
+      "seed": 0,
+      "library_version": "0.0.1",
+      "top_k": 1,
+      "chance_level": 0.001,
+      "axis_direction": "decreasing",
+      "levels": [
+        20.0,
+        34.166666666666664,
+        48.33333333333333,
+        62.5,
+        76.66666666666666,
+        90.83333333333333,
+        105.0
+      ],
+      "n_correct": [
+        231,
+        224,
+        210,
+        168,
+        82,
+        5,
+        2
+      ],
+      "n_trials": [
+        300,
+        300,
+        300,
+        300,
+        300,
+        300,
+        300
+      ],
+      "n_images": 300,
+      "n_classes": 1000,
+      "data_fingerprint": "63fc51ff08d7503409c9082a08798e23b8a7ab000ce4900f1356a3610f61e3d2",
+      "stimulus": "distractor_size:distracted=True:n=4",
+      "sigmoid": "logistic"
+    },
+    {
+      "model": "vit_small_patch16_224",
+      "suite": "DistractorRobustness",
+      "condition": "undistracted",
+      "config_hash": "28ab608de3d2c1127b1acad96b8772676c1845aca0444aa911a24e29efe7dbba",
+      "seed": 0,
+      "library_version": "0.0.1",
+      "top_k": 1,
+      "chance_level": 0.001,
+      "axis_direction": "decreasing",
+      "levels": [
+        20.0,
+        34.166666666666664,
+        48.33333333333333,
+        62.5,
+        76.66666666666666,
+        90.83333333333333,
+        105.0
+      ],
+      "n_correct": [
+        242,
+        242,
+        242,
+        242,
+        242,
+        242,
+        242
+      ],
+      "n_trials": [
+        300,
+        300,
+        300,
+        300,
+        300,
+        300,
+        300
+      ],
+      "n_images": 300,
+      "n_classes": 1000,
+      "data_fingerprint": "63fc51ff08d7503409c9082a08798e23b8a7ab000ce4900f1356a3610f61e3d2",
+      "stimulus": "distractor_size:distracted=False:n=4",
+      "sigmoid": "logistic"
+    }
+  ],
+  "extra": {
+    "run": "REAL",
+    "synthetic": false,
+    "models": [
+      "timm:resnet50 (pretrained ImageNet-1k, frozen, eval)",
+      "timm:vit_small_patch16_224 (pretrained ImageNet-1k, frozen, eval)"
+    ],
+    "dataset": "Imagenette val (real photographs, ImageFolder) at C:\\Users\\glopu\\OneDrive\\Desktop\\Experiments\\Exp_assets\\imagenette2-320\\val",
+    "n_images": 300,
+    "max_per_class": 30,
+    "stimulus": "DistractorRobustness(canvas=(224, 224), n_distractors=4, include_baseline=True) \u2014 a real 176px centred Imagenette target on a 224px canvas with 4 real-photo distractors (96px source content) grown from the margins",
+    "swept_variable": "distractor size in px (NOT spacing \u2014 see the module docstring)",
+    "levels_distractor_size_px": [
+      20.0,
+      34.166666666666664,
+      48.33333333333333,
+      62.5,
+      76.66666666666666,
+      90.83333333333333,
+      105.0
+    ],
+    "conditions": "'distractors' = the swept condition; 'undistracted' = target-alone baseline, level-invariant (a flat ceiling check, not a severity axis).",
+    "interpretation": "DISTRACTOR ROBUSTNESS, not crowding: no eccentricity, no fixation, no flanker-spacing law. Do not read a threshold here as a human crowding distance.",
+    "type2_scoring": "Score type-2 / meta-d' on decision_margin (decision-referenced, >= 0). Do NOT use abs(margin): it is target-referenced and goes artifactually anti-predictive at floor accuracy. See SCHEMA.md, 'The two margins'.",
+    "note": "REAL measured run: pretrained timm classifiers on real Imagenette images under the real psyvis distractor stimulus. No synthetic model, no fabricated logits."
+  }
+}
