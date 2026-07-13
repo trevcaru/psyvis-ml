@@ -1,4 +1,4 @@
-# Per-item sweep export — schema v1.0
+# Per-item sweep export — schema v1.1
 
 This is the **contract** for the trial-level artifact psyvis-ml writes next to its aggregate
 outputs. It is a plain data file: reading it needs **no psyvis-ml install**, only a CSV (or
@@ -48,36 +48,72 @@ the aggregate outputs are unchanged.
 | `level_index` | int | Zero-based index of the level within the swept list (same order as the sidecar's `levels`). |
 | `stimulus_level` | float | The level in the suite's **native units** (RMS contrast, noise σ, distractor size in px …). Its direction is not self-evident — see `severity_rank`. |
 | `severity_rank` | int | **Direction-aware severity axis.** `0` = cleanest/easiest level, `n_levels - 1` = most degraded/hardest. Derived from the suite's *declared* axis direction, never inferred from the data. Use this when you want a monotone severity axis without knowing the suite's units. |
-| `margin` | float | **Primary confidence signal.** Signed logit margin; boundary at 0. See below. |
+| `margin` | float | **Target-referenced confidence signal** (the threshold/psychometric one). Signed logit margin; boundary at 0. See below. For type-2 scoring use `decision_margin`, not `abs(margin)`. |
 | `correct` | bool | Was the true label among the model's top-`k` predictions? (`top_k` is in the sidecar; it is `1` unless stated otherwise.) Encoded `0`/`1` in CSV. |
 | `true_label` | int | True class index, or `-1` if unavailable. |
 | `predicted_label` | int | The model's top-1 class (argmax of the logit vector), or `-1` if unavailable. Present so a future binary/2AFC meta-d′ can recover the **response**, not just its correctness. |
 | `target_rank` | int | Rank of the true class in the logit vector; `1` = the true class is top-1. |
 | `target_logit` | float | Raw logit of the true class (arbitrary per-model scale). |
 | `max_softmax` | float | Max softmax probability. **Reference only, calibration-sensitive** — not a calibrated probability, and not a substitute for `margin`. |
+| `decision_margin` | float | **Type-2 metacognition signal** *(added in v1.1)*. Decision-referenced logit margin: `logit[top-1] − logit[top-2]`, always `≥ 0` — the model's confidence in the answer it actually gave. Equals `margin` on correct trials, diverges on errors. **Cannot be derived from the other columns.** See below. |
 
 Consumers must **tolerate unknown extra columns**: adding a column is a minor schema bump, not
 a break. `load_per_item` loads unrecognized columns as strings rather than rejecting the file.
+v1.1 appended `decision_margin` at the **end** of the column list, so every v1.0 column keeps
+its position and its meaning; a v1.0 reader is unaffected.
 
-## The margin (read this before scoring it)
+## The two margins (read this before scoring either)
 
 ```
-margin = logit[true_label] − max(logit[j] for j ≠ true_label)
+margin          = logit[true_label] − max(logit[j] for j ≠ true_label)     # target-referenced
+decision_margin = logit[top-1]      − logit[top-2]                         # decision-referenced
 ```
 
-* **Signed**, and its **decision boundary is 0**: `margin > 0` iff the true label is the top-1
-  prediction. So for `top_k = 1`, `correct == (margin > 0)` exactly.
-* It is a **raw evidence difference**, not a softmax probability. Softmax exponentiates the
+They answer different questions, and picking the wrong one silently produces a wrong result:
+
+| | `margin` | `decision_margin` |
+|---|---|---|
+| references | the **ground truth** (what the experimenter knows) | the **model's own answer** (what the observer knows) |
+| asks | "how much evidence did the true class have?" | "how confident was the model in the answer it gave?" |
+| sign | signed, boundary at 0 | always `≥ 0` |
+| use for | psychometric curve, confidence threshold, Δ-margin | **type-2 ROC / meta-d′ metacognition** |
+
+On a **correct** trial they are **exactly equal** — the target *is* the winner, so its best
+competitor *is* the runner-up. They diverge only on **errors**, where `margin` goes negative and
+measures the size of the *miss*, while `decision_margin` stays positive and measures the model's
+confidence in its wrong answer.
+
+**Do not score a type-2 ROC on `abs(margin)`.** On an error trial `abs(margin)` is
+`logit[top-1] − logit[true]` — the size of the miss, a quantity the model cannot observe. As
+accuracy approaches the floor, the surviving correct trials are the *barely*-correct ones (small
+`abs(margin)`) while errors carry a large `abs(margin)` precisely because the true class
+collapsed. The type-2 AUROC is then dragged **below 0.5 for definitional reasons**, which reads
+as "the model is confidently wrong" when it is nothing of the sort. Measured on real Imagenette
+with resnet50 + vit_small under gaussian noise, `abs(margin)` AUROC falls to 0.02–0.05 at the
+floor while `decision_margin` AUROC stays at 0.70–0.79 on the very same trials. Use
+`decision_margin`.
+
+`decision_margin` is exported (rather than left to the consumer) because it **cannot be
+reconstructed** from this file: the runner-up logit is not stored anywhere else, and it exists
+only inside the sweep, where the full logit vector is in hand.
+
+### Properties
+
+* `margin` is **signed**, and its **decision boundary is 0**: `margin > 0` iff the true label is
+  the top-1 prediction. So for `top_k = 1`, `correct == (margin > 0)` exactly. `decision_margin`
+  is **non-negative** by construction and carries no such boundary — the outcome bit is in
+  `correct`, which is the pairing a type-2 analysis needs.
+* Both are **raw evidence differences**, not softmax probabilities. Softmax exponentiates the
   logits, swings with temperature, and is poorly calibrated; `max_softmax` is recorded for
   reference only.
-* It is persisted **raw and signed. psyvis-ml never applies `abs()` on export.** Folding the
-  margin into an unsigned confidence — `abs(margin)`, the natural choice for type-2/meta-d′,
-  where confidence is magnitude and the outcome carries the sign — is a **scoring decision that
-  belongs to the consumer** (metaeval's bridge), not to the emitter. Exporting the signed value
-  keeps both the confidence magnitude and the direction of evidence recoverable; exporting
-  `abs()` would destroy the latter irreversibly.
-* **Logit scales are not comparable across models.** Never compare raw margins between models.
-  Within a model, or as a change from that model's own clean baseline (Δ-margin), is fine.
+* `margin` is persisted **raw and signed. psyvis-ml never applies `abs()` on export.** Folding it
+  into an unsigned confidence is a **scoring decision that belongs to the consumer**, not the
+  emitter — and note that for type-2 work the right answer is not to fold it at all, but to use
+  `decision_margin`. Exporting the signed value keeps both the magnitude and the direction of
+  evidence recoverable; exporting `abs()` would destroy the latter irreversibly.
+* **Logit scales are not comparable across models.** Never compare raw margins (of either kind)
+  between models. Within a model, or as a change from that model's own clean baseline (Δ-margin),
+  is fine.
 
 ## Missing values
 
@@ -92,10 +128,12 @@ margin = logit[true_label] − max(logit[j] for j ≠ true_label)
 
 | key | meaning |
 |---|---|
-| `schema_version` | This schema's version (`"1.0"`). |
+| `schema_version` | This schema's version (`"1.1"`). |
 | `data_file`, `n_rows` | The data file this sidecar describes, and its row count. |
 | `library_versions` | `psyvis_ml`, `python`, `numpy`, `scipy` versions at export time. |
 | `margin_definition`, `margin_boundary`, `margin_is_signed` | The margin contract above, restated in the file itself (boundary `0.0`, signed `true`). |
+| `decision_margin_definition` | The `decision_margin` contract above, restated in the file itself. |
+| `type2_confidence_column` | Which column to score a type-2 ROC on (`"decision_margin"`) — so a consumer does not have to infer it. |
 | `missing_label` | The integer sentinel (`-1`). |
 | `severity_rank_definition`, `axis_direction` | How `severity_rank` was derived; `decreasing` (higher level = worse: degradation, distractor size) or `increasing` (higher level = better: contrast). |
 | `columns` | The column list above (name, dtype, description). |
@@ -116,8 +154,15 @@ df   = pd.read_csv("per_item.csv")
 meta = json.load(open("per_item.meta.json"))
 
 df["correct"] = df["correct"].astype(bool)
-# Unsigned confidence for a type-2 analysis is the CONSUMER's choice, made here — not upstream:
-df["confidence"] = df["margin"].abs()
+
+# Type-2 (meta-d′) confidence: the model's confidence in its OWN answer. Use decision_margin.
+# NOT df["margin"].abs() — see "The two margins" above; that one goes anti-predictive at the
+# accuracy floor by construction.
+df["confidence"] = df["decision_margin"]
+
+# Sanity check the contract holds in the file you were handed:
+assert (df.loc[df.correct, "decision_margin"] == df.loc[df.correct, "margin"]).all()
+assert (df["decision_margin"] >= 0).all()
 ```
 
 With psyvis-ml, for the same result plus the sidecar in one object:
@@ -137,3 +182,8 @@ table.to_pandas()               # if pandas is installed
 The columns and their semantics above are the stable interface. Additive changes (new columns,
 new sidecar keys) bump the minor version; renaming or re-meaning a column bumps the major
 version and is announced in `schema_version`.
+
+| version | change |
+|---|---|
+| `1.0` | Initial schema. |
+| `1.1` | **Added** `decision_margin` (appended last) + the `decision_margin_definition` and `type2_confidence_column` sidecar keys. Purely additive: every 1.0 column keeps its position and meaning, so 1.0 readers are unaffected. Files written by 1.0 have no `decision_margin`; `load_per_item` fills it with `NaN` for bundles that never recorded it. |
