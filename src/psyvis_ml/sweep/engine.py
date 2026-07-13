@@ -93,6 +93,7 @@ def run_sweep(
     model_name=None,
     stimulus_name=None,
     extra_config=None,
+    item_ids=None,
 ):
     """Run a method-of-constant-stimuli sweep.
 
@@ -126,6 +127,11 @@ def run_sweep(
         cross-process reproducibility).
     extra_config
         Optional extra dict merged into the hashed config (e.g. suite parameters).
+    item_ids
+        Optional stable identifier per image (e.g. a file path), length ``len(images)``,
+        recorded on the bundle so a per-item export can be joined back to the source images.
+        Defaults to None, in which case consumers fall back to the positional image index.
+        Identifiers are *not* folded into the config hash (the image content already is).
 
     Returns
     -------
@@ -135,6 +141,12 @@ def run_sweep(
     n_images = len(images)
     if n_images != labels.shape[0]:
         raise ValueError(f"len(images)={n_images} != len(labels)={labels.shape[0]}.")
+    if item_ids is not None:
+        item_ids = tuple(str(x) for x in item_ids)
+        if len(item_ids) != n_images:
+            raise ValueError(
+                f"len(item_ids)={len(item_ids)} != len(images)={n_images}."
+            )
     if n_images == 0:
         raise ValueError("empty image set.")
     levels = [float(x) for x in levels]
@@ -172,13 +184,16 @@ def run_sweep(
     n_trials = tuple(n_images for _ in levels)
 
     # Per-image confidence signals, stacked to (n_levels, n_images). The margin is the primary
-    # signal; rank/target-logit/max-softmax are recorded too (softmax reference-only).
+    # signal; rank/target-logit/max-softmax are recorded too (softmax reference-only). The
+    # margin is stored SIGNED (boundary at 0) — folding it into an unsigned confidence is a
+    # consumer's decision, not the sweep's.
     per_image = {
         "margin": np.vstack([r[3].margin for r in results]),
         "target_rank": np.vstack([r[3].target_rank for r in results]),
         "target_logit": np.vstack([r[3].target_logit for r in results]),
         "max_softmax": np.vstack([r[3].max_softmax for r in results]),
         "correct": np.vstack([r[3].correct for r in results]),
+        "predicted_label": np.vstack([r[3].predicted_label for r in results]),
     }
 
     config = {
@@ -205,4 +220,6 @@ def run_sweep(
         config=config,
         metadata={"n_images": n_images, "n_classes": n_classes, "batched": bool(batched)},
         per_image=per_image,
+        true_labels=tuple(int(x) for x in labels),
+        item_ids=item_ids or (),
     )

@@ -42,13 +42,20 @@ MEAN_SPAN = 0.3
 
 @dataclass(frozen=True)
 class Dataset:
-    """A labeled image set. ``images`` is indexable per sample; ``labels`` are class ints."""
+    """A labeled image set. ``images`` is indexable per sample; ``labels`` are class ints.
+
+    ``item_ids`` is an optional stable identifier per image (e.g. its source file path). It is
+    carried through the sweep onto the run bundle so the per-item export
+    (:mod:`psyvis_ml.per_item`) can be joined back to the source images; when it is None,
+    consumers fall back to the image's positional index. It never affects measurement.
+    """
 
     images: np.ndarray
     labels: np.ndarray
     num_classes: int
     name: str = "synthetic"
     metadata: dict = field(default_factory=dict)
+    item_ids: tuple = None
 
     def __len__(self) -> int:
         return len(self.images)

@@ -76,19 +76,25 @@ class LogitScores:
     probability). ``target_rank`` is 1 when the target is the top-1 prediction.
     """
 
-    correct: np.ndarray        # bool: is the target among the top-k predictions?
-    margin: np.ndarray         # float: logit[target] - max(logit[others]); >0 = target leads
-    target_rank: np.ndarray    # int: 1 = target is top-1 (count of strictly-higher logits + 1)
-    target_logit: np.ndarray   # float: the raw logit assigned to the target class
-    max_softmax: np.ndarray    # float: max softmax probability (REFERENCE ONLY; not calibrated)
+    correct: np.ndarray         # bool: is the target among the top-k predictions?
+    margin: np.ndarray          # float: logit[target] - max(logit[others]); >0 = target leads
+    target_rank: np.ndarray     # int: 1 = target is top-1 (count of strictly-higher logits + 1)
+    target_logit: np.ndarray    # float: the raw logit assigned to the target class
+    max_softmax: np.ndarray     # float: max softmax probability (REFERENCE ONLY; not calibrated)
+    predicted_label: np.ndarray  # int: the model's top-1 class (argmax of the logit vector)
 
 
 def score_logits(logits, labels, k=1) -> LogitScores:
     """Extract correctness + confidence signals from ``(n_samples, n_classes)`` logits.
 
     The **logit margin** ``logit[target] − max(logit[others])`` is the primary confidence
-    measure. Also returns the target's rank, its raw logit, and (for reference only) the
-    max-softmax probability. See the module docstring for why softmax is not primary.
+    measure. Also returns the target's rank, its raw logit, the top-1 predicted class, and
+    (for reference only) the max-softmax probability. See the module docstring for why softmax
+    is not primary.
+
+    The margin is **signed** and its decision boundary is ``0``: ``margin > 0`` iff the target
+    is the top-1 prediction. It is never absolute-valued here — downstream consumers decide
+    how to fold it (e.g. into an unsigned confidence).
     """
     logits = _as_logits_2d(logits)
     labels = np.asarray(labels).ravel()
@@ -125,4 +131,5 @@ def score_logits(logits, labels, k=1) -> LogitScores:
         target_rank=target_rank.astype(int),
         target_logit=target_logit,
         max_softmax=max_softmax,
+        predicted_label=np.argmax(logits, axis=1).astype(int),
     )

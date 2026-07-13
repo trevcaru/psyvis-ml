@@ -57,9 +57,16 @@ class RunBundle:
 
     ``per_image`` optionally holds the raw per-image confidence signals as
     ``(n_levels, n_images)`` arrays keyed by ``"margin"``, ``"target_rank"``,
-    ``"target_logit"``, ``"max_softmax"``, and ``"correct"``. It feeds the descriptive
-    confidence readout (:mod:`psyvis_ml.confidence`) — it is *not* part of the config hash and
-    does not feed the binomial fitting core.
+    ``"target_logit"``, ``"max_softmax"``, ``"predicted_label"``, and ``"correct"``. It feeds
+    the descriptive confidence readout (:mod:`psyvis_ml.confidence`) and the per-item export
+    (:mod:`psyvis_ml.per_item`) — it is *not* part of the config hash and does not feed the
+    binomial fitting core.
+
+    ``true_labels`` and ``item_ids`` are per-*image* (length ``n_images``, constant across
+    levels): the class index each image was scored against, and a stable identifier for it.
+    ``item_ids`` is empty when the caller supplied none, in which case consumers fall back to
+    the image's positional index. Neither is part of the config hash — they identify rows, they
+    are not experimental configuration (the image *content* is already fingerprinted).
     """
 
     seed: int
@@ -72,6 +79,8 @@ class RunBundle:
     config: dict = field(default_factory=dict)
     metadata: dict = field(default_factory=dict)
     per_image: dict = field(default_factory=dict)
+    true_labels: tuple[int, ...] = ()
+    item_ids: tuple[str, ...] = ()
 
     def to_fit_inputs(self):
         """Return ``(levels, n_correct, n_trials)`` as arrays, ready for ``fit_psychometric``."""

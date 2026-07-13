@@ -177,6 +177,20 @@ class MeasureResult:
             return readouts.confidence_threshold
         return {lbl: r.confidence_threshold for lbl, r in readouts.items()}
 
+    # -- per-item export (the trial-level handoff artifact) --------------------- #
+    def write_per_item(self, outdir, **kwargs):
+        """Persist the per-item table (one row per item × level × condition) + JSON sidecar.
+
+        The aggregate outputs (``results.json``, the report's ``metadata.json``) keep only
+        per-level counts and fits, which cannot reconstruct a trial-level (type-2 / meta-d′)
+        analysis. This writes the rows that can: the **signed** logit margin (boundary at 0)
+        paired with the correctness bit, per item and level. See
+        :func:`psyvis_ml.per_item.write_per_item` and ``SCHEMA.md``.
+        """
+        from .per_item import write_per_item
+
+        return write_per_item(self, outdir, **kwargs)
+
     def plot(self, **kwargs):
         """Plot P(correct) vs. level with fitted curve(s) and CI band. Returns a Figure."""
         from .plotting import plot_result
@@ -244,6 +258,10 @@ def measure(model, suite, dataset, levels, *, top_k=1, seed=None, lapse_rate=0.0
     images = dataset.images
     labels = dataset.labels
     num_classes = dataset.num_classes
+    # Stable per-image identifiers, when the dataset carries them (e.g. file paths from
+    # imagenet_subset). They only identify rows in the per-item export; consumers fall back to
+    # the image index when absent, so this stays optional.
+    item_ids = getattr(dataset, "item_ids", None)
 
     chance = suite.chance_level(num_classes, top_k)
     sigmoid = getattr(suite, "sigmoid", "weibull")
@@ -269,6 +287,7 @@ def measure(model, suite, dataset, levels, *, top_k=1, seed=None, lapse_rate=0.0
             stimulus_name=cond.stimulus_name,
             extra_config={"condition": cond.label, "chance_level": chance,
                           "suite": suite.__class__.__name__},
+            item_ids=item_ids,
         )
         lv, nc, nt = bundle.to_fit_inputs()
         extra_fit = _decreasing_logistic_fit_kwargs(lv, chance, lapse_rate) if decreasing else {}

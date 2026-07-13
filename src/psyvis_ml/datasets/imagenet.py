@@ -154,7 +154,8 @@ def imagenet_subset(root, *, classes=None, max_classes=None, max_per_class=20,
     -------
     Dataset
         ``images`` is ``(N, image_size, image_size, 3)`` float32 in ``[0, 1]``; ``labels`` are
-        ImageNet class indices.
+        ImageNet class indices; ``item_ids`` are the source file paths relative to ``root``, so
+        a per-item export can be traced back to the exact image.
     """
     root = Path(root)
     if not root.is_dir():
@@ -176,7 +177,7 @@ def imagenet_subset(root, *, classes=None, max_classes=None, max_per_class=20,
         wnid_to_index = imagenet_wnid_to_index()
 
     rng = np.random.default_rng(seed)
-    images, labels, used = [], [], []
+    images, labels, item_ids, used = [], [], [], []
     for d in class_dirs:
         label = _resolve_label(d.name, wnid_to_index or {})
         files = sorted(p for p in d.iterdir()
@@ -187,6 +188,8 @@ def imagenet_subset(root, *, classes=None, max_classes=None, max_per_class=20,
         for j in order[:max_per_class]:
             images.append(load_image(files[j], image_size=image_size))
             labels.append(label)
+            # Path relative to the root: a stable item id that survives moving the dataset.
+            item_ids.append(files[j].relative_to(root).as_posix())
         used.append(d.name)
 
     if not images:
@@ -200,4 +203,5 @@ def imagenet_subset(root, *, classes=None, max_classes=None, max_per_class=20,
         num_classes=int(num_classes),
         name=f"imagenet-subset({root.name})",
         metadata={"classes": used, "image_size": image_size, "n_images": len(images)},
+        item_ids=tuple(item_ids),
     )
