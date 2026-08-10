@@ -1,0 +1,64 @@
+==============================================================================
+Test A — threshold split-half reliability (REAL DATA ONLY)
+==============================================================================
+split seeds       : [0]
+bootstrap n / seed: 2000 / 12345
+max_per_class     : FULL val set
+output dir        : C:\Users\glopu\OneDrive\Desktop\Experiments\psyvis-ml\experiments\test_a_split_half
+
+[gate] loading real Imagenette val set once ...
+[gate] path exists & is a directory: C:\Users\glopu\OneDrive\Desktop\Experiments\Exp_assets\imagenette2-320\val
+[gate] real image files loaded (opened from disk): 3925
+[gate] classes: 10  per-class counts: {0: 387, 217: 395, 482: 357, 491: 386, 497: 409, 566: 394, 569: 389, 571: 419, 574: 399, 701: 390}
+[gate] load took 22.3s
+
+[gate] loading models (timm, pretrained=True, frozen, eval) ...
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+    [timm:resnet50] clean top-1 on 40 real imgs = 0.975 (chance=0.0010)
+    [timm:vit_small_patch16_224] clean top-1 on 40 real imgs = 0.975 (chance=0.0010)
+[gate] suite contrast: levels = [0.01       0.01919383 0.03684031 0.07071068 0.13572088 0.26050037
+ 0.5       ]
+[gate] suite degradation: levels = [0.         0.13333333 0.26666667 0.4        0.53333333 0.66666667
+ 0.8       ]
+
+############################################################
+# split seed 0
+############################################################
+[gate] half A: 1962 imgs  half B: 1963 imgs  (disjoint, union = 3925 = n_items 3925)
+[gate] class balance A: {0: 195, 217: 200, 482: 170, 491: 177, 497: 211, 566: 190, 569: 201, 571: 205, 574: 205, 701: 208}
+[gate] class balance B: {0: 192, 217: 195, 482: 187, 491: 209, 497: 198, 566: 204, 569: 188, 571: 214, 574: 194, 701: 182}
+
+  -> sweep 1/8: contrast / resnet50 / half A (1962 imgs) ...
+     thr=0.04916 CI=[0.04489,0.05331] converged=True at_bound=— (381.3s) | elapsed 6.4m ETA 44.9m
+
+  -> sweep 2/8: contrast / resnet50 / half B (1963 imgs) ...
+     thr=0.05564 CI=[0.05085,0.06034] converged=True at_bound=— (376.7s) | elapsed 12.8m ETA 38.3m
+
+  -> sweep 3/8: contrast / vit_small_patch16_224 / half A (1962 imgs) ...
+     thr=0.1919 CI=[0.1826,0.2017] converged=True at_bound=— (362.8s) | elapsed 18.8m ETA 31.4m
+
+  -> sweep 4/8: contrast / vit_small_patch16_224 / half B (1963 imgs) ...
+     thr=0.1917 CI=[0.1826,0.2011] converged=True at_bound=— (364.7s) | elapsed 25.0m ETA 25.0m
+
+  -> sweep 5/8: degradation / resnet50 / half A (1962 imgs) ...
+     thr=0.09499 CI=[0.08738,0.1028] converged=True at_bound=— (388.8s) | elapsed 31.5m ETA 18.9m
+
+  -> sweep 6/8: degradation / resnet50 / half B (1963 imgs) ...
+     thr=0.0983 CI=[0.09092,0.1059] converged=True at_bound=— (392.9s) | elapsed 38.1m ETA 12.7m
+
+  -> sweep 7/8: degradation / vit_small_patch16_224 / half A (1962 imgs) ...
+     thr=0.1172 CI=[0.1077,0.1269] converged=True at_bound=— (364.7s) | elapsed 44.2m ETA 6.3m
+
+  -> sweep 8/8: degradation / vit_small_patch16_224 / half B (1963 imgs) ...
+     thr=0.1257 CI=[0.1167,0.1348] converged=True at_bound=— (358.2s) | elapsed 50.3m ETA 0.0m
+
+==============================================================================
+VERDICT: AMBIGUOUS
+  - only 4 comparison(s) so far — a smoke run, not the full 20-comparison design
+  - overlap rate 100%
+  - max |Δ|/gap 24%
+  - run the full 5-seed design (20 comparisons) to resolve
+
+overlap rate: 100% (4 evaluable) | ranking held 4/4 | paired-Δ excludes-0 rate 25%
+total wall-clock: 50.7 min (4 comparisons, 8 sweeps)
+wrote: results.csv, results.md, split_half.png, provenance.json -> C:\Users\glopu\OneDrive\Desktop\Experiments\psyvis-ml\experiments\test_a_split_half

@@ -166,9 +166,24 @@ by [`examples/generate_gallery.py`](examples/generate_gallery.py) into
 > observer paradigms on a shared contrast axis. A model threshold far from the human line is a
 > difference in task, not proof that a model does or does not "see like" a human.
 
+**Split-half reliability (measured).** Across 5 random half-splits of Imagenette val, the contrast
+threshold's median split-half |Δ| is 7% of the between-model gap (max 12%) and the resnet50 <
+vit_small ranking held 20/20 — the threshold separation is a reproducible model property, not an
+artifact of which images were swept. A companion check finds the per-threshold bootstrap CIs are
+~2× too narrow (they miss item-sampling variance), but the between-model gap is ~30% of the swept
+contrast axis and dwarfs even a widened CI, so the separation stands. See
+[results.md](experiments/test_a_split_half/results.md) and
+[ci_vs_delta.md](experiments/test_a_split_half/ci_vs_delta.md).
+
 **Degradation (gaussian noise): fitted falling curves plus the margin readout.**
 
 ![degradation comparison](outputs/gallery/degradation_comparison.png)
+
+**Split-half reliability (requalified).** The between-model threshold gap here is small (0.036), and
+split-half |Δ| reaches 26% median / 67% max of it at n ≈ 1962: the direction (resnet50 < vit_small)
+is reliable (20/20) but the precise gap is item-sampling-fragile — read it with that caveat (~16k
+images/half would resolve it), rather than as a crisp separation. See
+[experiments/test_a_split_half/results.md](experiments/test_a_split_half/results.md).
 
 **Distractor robustness: sweep distractor size for a real threshold.** A big centred target
 (large enough to clear the recognition ceiling) is surrounded by distractors which are swept 

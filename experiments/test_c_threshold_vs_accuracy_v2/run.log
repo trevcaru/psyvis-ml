@@ -1,0 +1,69 @@
+==============================================================================
+Test C v2 — threshold vs accuracy, 2 suites, FULL PERSISTENCE (REAL DATA ONLY)
+==============================================================================
+device: cuda:NVIDIA GeForce RTX 4070 SUPER · torch 2.6.0+cu124 · timm 1.0.27
+[gate] dataset C:\Users\glopu\OneDrive\Desktop\Experiments\Exp_assets\imagenette2-320\val · 3925 real images · loaded 6.9s
+[gate] suite contrast: [0.001      0.00199474 0.00397897 0.00793701 0.01583223 0.03158114
+ 0.06299605 0.12566053 0.25065966 0.5       ]  (step ratio 1.995)
+[gate] suite degradation: [0.         0.13333333 0.26666667 0.4        0.53333333 0.66666667
+ 0.8       ]
+
+[1/10] resnet18 (CNN) — loading pretrained ...
+  [gate] clean top-1 = 0.7541 (chance 0.0010) PASS · 11.7M · tag a1_in1k · 6.1s
+    [contrast] thr=0.2088 CI=[0.2021,0.2162] slope=1.024 conv=True at_bound=— | sweep 110.5s + per-item 0.3s (39250 rows) | elapsed 2.0m ETA 38.0m
+    [degradation] thr=0.01579 CI=[0.01017,0.02118] slope=-1.87 conv=True at_bound=— | sweep 98.8s + per-item 0.2s (27475 rows) | elapsed 3.7m ETA 33.4m
+
+[2/10] resnet50 (CNN) — loading pretrained ...
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  [gate] clean top-1 = 0.8627 (chance 0.0010) PASS · 25.6M · tag a1_in1k · 12.3s
+    [contrast] thr=0.04654 CI=[0.04528,0.04781] slope=6.02 conv=True at_bound=— | sweep 171.0s + per-item 0.3s (39250 rows) | elapsed 6.8m ETA 38.8m
+    [degradation] thr=0.09753 CI=[0.09189,0.103] slope=-1.65 conv=True at_bound=— | sweep 138.7s + per-item 0.2s (27475 rows) | elapsed 9.2m ETA 36.9m
+
+[3/10] resnet101 (CNN) — loading pretrained ...
+  [gate] clean top-1 = 0.8983 (chance 0.0010) PASS · 44.5M · tag a1h_in1k · 23.2s
+    [contrast] thr=0.01021 CI=[0.009971,0.01047] slope=36.84 conv=True at_bound=— | sweep 278.9s + per-item 0.3s (39250 rows) | elapsed 14.4m ETA 43.1m
+    [degradation] thr=0.1205 CI=[0.115,0.1261] slope=-1.616 conv=True at_bound=— | sweep 213.7s + per-item 0.2s (27475 rows) | elapsed 18.0m ETA 41.9m
+
+[4/10] efficientnet_b0 (CNN) — loading pretrained ...
+  [gate] clean top-1 = 0.8469 (chance 0.0010) PASS · 5.3M · tag ra_in1k · 15.4s
+    [contrast] thr=0.2011 CI=[0.1961,0.2064] slope=1.616 conv=True at_bound=— | sweep 213.5s + per-item 0.3s (39250 rows) | elapsed 21.8m ETA 40.6m
+    [degradation] thr=0.06706 CI=[0.06248,0.07151] slope=-2.347 conv=True at_bound=— | sweep 165.3s + per-item 0.2s (27475 rows) | elapsed 24.7m ETA 37.0m
+
+[5/10] convnext_tiny (CNN) — loading pretrained ...
+  [gate] clean top-1 = 0.8818 (chance 0.0010) PASS · 28.6M · tag in12k_ft_in1k · 12.2s
+    [contrast] thr=0.03934 CI=[0.03838,0.0403] slope=9.721 conv=True at_bound=— | sweep 176.7s + per-item 0.3s (39250 rows) | elapsed 27.9m ETA 34.1m
+    [degradation] thr=0.1232 CI=[0.1174,0.1288] slope=-1.484 conv=True at_bound=— | sweep 136.0s + per-item 0.2s (27475 rows) | elapsed 30.2m ETA 30.2m
+
+[6/10] vit_small_patch16_224 (ViT) — loading pretrained ...
+  [gate] clean top-1 = 0.8227 (chance 0.0010) PASS · 22.1M · tag augreg_in21k_ft_in1k · 10.9s
+    [contrast] thr=0.1826 CI=[0.1774,0.188] slope=1.431 conv=True at_bound=— | sweep 157.5s + per-item 0.3s (39250 rows) | elapsed 33.1m ETA 27.1m
+    [degradation] thr=0.1242 CI=[0.1177,0.1307] slope=-1.249 conv=True at_bound=— | sweep 128.3s + per-item 0.2s (27475 rows) | elapsed 35.3m ETA 23.5m
+
+[7/10] vit_base_patch16_224 (ViT) — loading pretrained ...
+  [gate] clean top-1 = 0.8950 (chance 0.0010) PASS · 86.6M · tag augreg2_in21k_ft_in1k · 18.0s
+    [contrast] thr=0.02478 CI=[0.02416,0.02541] slope=14.76 conv=True at_bound=— | sweep 224.1s + per-item 0.3s (39250 rows) | elapsed 39.4m ETA 21.2m
+    [degradation] thr=0.2654 CI=[0.2578,0.2735] slope=-0.8519 conv=True at_bound=— | sweep 174.9s + per-item 0.2s (27475 rows) | elapsed 42.4m ETA 18.2m
+
+[8/10] deit_small_patch16_224 (ViT) — loading pretrained ...
+  [gate] clean top-1 = 0.8573 (chance 0.0010) PASS · 22.1M · tag fb_in1k · 11.3s
+    [contrast] thr=0.05903 CI=[0.05684,0.06115] slope=2.609 conv=True at_bound=— | sweep 158.5s + per-item 0.3s (39250 rows) | elapsed 45.3m ETA 15.1m
+    [degradation] thr=0.167 CI=[0.1612,0.173] slope=-1.381 conv=True at_bound=— | sweep 126.4s + per-item 0.2s (27475 rows) | elapsed 47.4m ETA 11.9m
+
+[9/10] swin_tiny_patch4_window7_224 (hybrid) — loading pretrained ...
+  [gate] clean top-1 = 0.8599 (chance 0.0010) PASS · 28.3M · tag ms_in1k · 20.7s
+    [contrast] thr=0.06314 CI=[0.06072,0.06577] slope=2.19 conv=True at_bound=— | sweep 253.2s + per-item 0.3s (39250 rows) | elapsed 52.1m ETA 9.2m
+    [degradation] thr=0.1255 CI=[0.1191,0.132] slope=-1.27 conv=True at_bound=— | sweep 195.6s + per-item 0.2s (27475 rows) | elapsed 55.4m ETA 6.2m
+
+[10/10] mobilenetv3_large_100 (CNN) — loading pretrained ...
+  [gate] clean top-1 = 0.8520 (chance 0.0010) PASS · 5.5M · tag ra_in1k · 14.1s
+    [contrast] thr=0.2304 CI=[0.2247,0.2362] slope=1.519 conv=True at_bound=— | sweep 194.1s + per-item 0.3s (39250 rows) | elapsed 58.9m ETA 3.1m
+    [degradation] thr=0.06214 CI=[0.05787,0.06628] slope=-2.686 conv=True at_bound=— | sweep 153.0s + per-item 0.2s (27475 rows) | elapsed 61.5m ETA 0.0m
+
+==============================================================================
+contrast: INTERMEDIATE — partly, not wholly, redundant with accuracy
+   r=-0.733 r²=0.537 CI[0.28,0.98] excl0.7=False | ρ=-0.903 | reliable 10/10
+degradation: INTERMEDIATE — partly, not wholly, redundant with accuracy
+   r=0.667 r²=0.445 CI[0.01,0.83] excl0.7=False | ρ=0.467 | reliable 10/10
+cross-suite contrast↔degradation: r=-0.675 (r²=0.456)
+total wall-clock: 61.6 min | per-item rows: 667250
+wrote curves.json, results.csv, results.md, 4 PNGs, provenance.json, per_item/ -> C:\Users\glopu\OneDrive\Desktop\Experiments\psyvis-ml\experiments\test_c_threshold_vs_accuracy_v2

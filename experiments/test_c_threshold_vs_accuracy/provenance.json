@@ -1,0 +1,395 @@
+{
+  "test": "C \u2014 contrast threshold vs. clean accuracy",
+  "timestamp": "2026-07-15T23:57:27.863401+00:00",
+  "dataset_path": "C:\\Users\\glopu\\OneDrive\\Desktop\\Experiments\\Exp_assets\\imagenette2-320\\val",
+  "n_items": 3925,
+  "image_size": 224,
+  "device": "cuda:NVIDIA GeForce RTX 4070 SUPER",
+  "models_requested": [
+    "resnet18",
+    "resnet50",
+    "resnet101",
+    "efficientnet_b0",
+    "convnext_tiny",
+    "vit_small_patch16_224",
+    "vit_base_patch16_224",
+    "deit_small_patch16_224",
+    "swin_tiny_patch4_window7_224",
+    "mobilenetv3_large_100"
+  ],
+  "models_used": [
+    "resnet18",
+    "resnet50",
+    "resnet101",
+    "efficientnet_b0",
+    "convnext_tiny",
+    "vit_small_patch16_224",
+    "vit_base_patch16_224",
+    "deit_small_patch16_224",
+    "swin_tiny_patch4_window7_224",
+    "mobilenetv3_large_100"
+  ],
+  "dropped": [],
+  "weight_source": "timm create_model(pretrained=True) \u2014 ImageNet-1k (default tags)",
+  "weight_tags": {
+    "resnet18": "a1_in1k",
+    "resnet50": "a1_in1k",
+    "resnet101": "a1h_in1k",
+    "efficientnet_b0": "ra_in1k",
+    "convnext_tiny": "in12k_ft_in1k",
+    "vit_small_patch16_224": "augreg_in21k_ft_in1k",
+    "vit_base_patch16_224": "augreg2_in21k_ft_in1k",
+    "deit_small_patch16_224": "fb_in1k",
+    "swin_tiny_patch4_window7_224": "ms_in1k",
+    "mobilenetv3_large_100": "ra_in1k"
+  },
+  "contrast_levels": [
+    0.01,
+    0.019193831036664843,
+    0.03684031498640387,
+    0.07071067811865475,
+    0.13572088082974532,
+    0.26050036547934563,
+    0.5
+  ],
+  "sweep_seed": 0,
+  "target": 0.75,
+  "n_boot": 2000,
+  "boot_seed": 12345,
+  "clean_acc": {
+    "resnet18": 0.7541401273885351,
+    "resnet50": 0.8626751592356688,
+    "resnet101": 0.898343949044586,
+    "efficientnet_b0": 0.8468789808917198,
+    "convnext_tiny": 0.8817834394904459,
+    "vit_small_patch16_224": 0.8226751592356688,
+    "vit_base_patch16_224": 0.8950318471337579,
+    "deit_small_patch16_224": 0.8573248407643312,
+    "swin_tiny_patch4_window7_224": 0.8598726114649682,
+    "mobilenetv3_large_100": 0.8519745222929936
+  },
+  "acc_spread_points": 14.420382165605094,
+  "correlations": {
+    "acc_vs_threshold": {
+      "pearson": -0.7356640399281636,
+      "pearson_ci": [
+        -0.9487153362345591,
+        -0.5116032333977777
+      ],
+      "spearman": -0.7454545454545454,
+      "spearman_ci": [
+        -0.9030303030303028,
+        -0.06666666666666665
+      ],
+      "r2": 0.5412015796434267,
+      "n": 10
+    },
+    "acc_vs_slope": {
+      "pearson": 0.4168662340320066,
+      "pearson_ci": [
+        0.3559108293182216,
+        0.9554635164752977
+      ],
+      "spearman": 0.9151515151515152,
+      "spearman_ci": [
+        0.49090909090909085,
+        0.9999999999999999
+      ],
+      "r2": 0.1737774570760277,
+      "n": 10
+    },
+    "threshold_vs_slope": {
+      "pearson": -0.41065778112737567,
+      "pearson_ci": [
+        -0.9133539440579209,
+        -0.3248244465903287
+      ],
+      "spearman": -0.8666666666666665,
+      "spearman_ci": [
+        -0.9393939393939393,
+        -0.43030303030303024
+      ],
+      "r2": 0.16863981320045957,
+      "n": 10
+    }
+  },
+  "equal_accuracy_pairs": [
+    {
+      "m1": "resnet101",
+      "m2": "convnext_tiny",
+      "dacc_pts": 1.6560509554140124,
+      "thr1": 0.0005735929786097133,
+      "thr2": 0.06253075317055738,
+      "dthr": 0.06195716019194767,
+      "thr_ratio": 109.01589716478179,
+      "both_reliable": false,
+      "acc1": 0.898343949044586,
+      "acc2": 0.8817834394904459
+    },
+    {
+      "m1": "resnet101",
+      "m2": "vit_base_patch16_224",
+      "dacc_pts": 0.33121019108280914,
+      "thr1": 0.0005735929786097133,
+      "thr2": 0.027848300648346903,
+      "dthr": 0.02727470766973719,
+      "thr_ratio": 48.55063030207622,
+      "both_reliable": false,
+      "acc1": 0.898343949044586,
+      "acc2": 0.8950318471337579
+    },
+    {
+      "m1": "deit_small_patch16_224",
+      "m2": "mobilenetv3_large_100",
+      "dacc_pts": 0.5350318471337601,
+      "thr1": 0.022690569613100422,
+      "thr2": 0.2346315826322525,
+      "dthr": 0.21194101301915208,
+      "thr_ratio": 10.340488874143897,
+      "both_reliable": true,
+      "acc1": 0.8573248407643312,
+      "acc2": 0.8519745222929936
+    },
+    {
+      "m1": "efficientnet_b0",
+      "m2": "deit_small_patch16_224",
+      "dacc_pts": 1.0445859872611485,
+      "thr1": 0.20755621282088477,
+      "thr2": 0.022690569613100422,
+      "dthr": 0.18486564320778434,
+      "thr_ratio": 9.147245589685506,
+      "both_reliable": true,
+      "acc1": 0.8468789808917198,
+      "acc2": 0.8573248407643312
+    },
+    {
+      "m1": "swin_tiny_patch4_window7_224",
+      "m2": "mobilenetv3_large_100",
+      "dacc_pts": 0.7898089171974543,
+      "thr1": 0.02596114678673006,
+      "thr2": 0.2346315826322525,
+      "dthr": 0.20867043584552245,
+      "thr_ratio": 9.037797311487932,
+      "both_reliable": true,
+      "acc1": 0.8598726114649682,
+      "acc2": 0.8519745222929936
+    },
+    {
+      "m1": "efficientnet_b0",
+      "m2": "swin_tiny_patch4_window7_224",
+      "dacc_pts": 1.2993630573248427,
+      "thr1": 0.20755621282088477,
+      "thr2": 0.02596114678673006,
+      "dthr": 0.1815950660341547,
+      "thr_ratio": 7.9948784437741525,
+      "both_reliable": true,
+      "acc1": 0.8468789808917198,
+      "acc2": 0.8598726114649682
+    },
+    {
+      "m1": "resnet50",
+      "m2": "mobilenetv3_large_100",
+      "dacc_pts": 1.0700636942675201,
+      "thr1": 0.052079545930025554,
+      "thr2": 0.2346315826322525,
+      "dthr": 0.18255203670222694,
+      "thr_ratio": 4.505254000246184,
+      "both_reliable": true,
+      "acc1": 0.8626751592356688,
+      "acc2": 0.8519745222929936
+    },
+    {
+      "m1": "resnet50",
+      "m2": "efficientnet_b0",
+      "dacc_pts": 1.5796178343949085,
+      "thr1": 0.052079545930025554,
+      "thr2": 0.20755621282088477,
+      "dthr": 0.1554766668908592,
+      "thr_ratio": 3.985369094802761,
+      "both_reliable": true,
+      "acc1": 0.8626751592356688,
+      "acc2": 0.8468789808917198
+    },
+    {
+      "m1": "resnet50",
+      "m2": "deit_small_patch16_224",
+      "dacc_pts": 0.5350318471337601,
+      "thr1": 0.052079545930025554,
+      "thr2": 0.022690569613100422,
+      "dthr": 0.029388976316925133,
+      "thr_ratio": 2.2952066350929057,
+      "both_reliable": true,
+      "acc1": 0.8626751592356688,
+      "acc2": 0.8573248407643312
+    },
+    {
+      "m1": "convnext_tiny",
+      "m2": "vit_base_patch16_224",
+      "dacc_pts": 1.3248407643312032,
+      "thr1": 0.06253075317055738,
+      "thr2": 0.027848300648346903,
+      "dthr": 0.03468245252221048,
+      "thr_ratio": 2.24540642390218,
+      "both_reliable": true,
+      "acc1": 0.8817834394904459,
+      "acc2": 0.8950318471337579
+    },
+    {
+      "m1": "resnet50",
+      "m2": "swin_tiny_patch4_window7_224",
+      "dacc_pts": 0.28025477707006585,
+      "thr1": 0.052079545930025554,
+      "thr2": 0.02596114678673006,
+      "dthr": 0.026118399143295494,
+      "thr_ratio": 2.006057219192097,
+      "both_reliable": true,
+      "acc1": 0.8626751592356688,
+      "acc2": 0.8598726114649682
+    },
+    {
+      "m1": "resnet50",
+      "m2": "convnext_tiny",
+      "dacc_pts": 1.9108280254777066,
+      "thr1": 0.052079545930025554,
+      "thr2": 0.06253075317055738,
+      "dthr": 0.010451207240531828,
+      "thr_ratio": 1.2006777719332298,
+      "both_reliable": true,
+      "acc1": 0.8626751592356688,
+      "acc2": 0.8817834394904459
+    },
+    {
+      "m1": "deit_small_patch16_224",
+      "m2": "swin_tiny_patch4_window7_224",
+      "dacc_pts": 0.2547770700636942,
+      "thr1": 0.022690569613100422,
+      "thr2": 0.02596114678673006,
+      "dthr": 0.0032705771736296387,
+      "thr_ratio": 1.1441381697064743,
+      "both_reliable": true,
+      "acc1": 0.8573248407643312,
+      "acc2": 0.8598726114649682
+    },
+    {
+      "m1": "efficientnet_b0",
+      "m2": "mobilenetv3_large_100",
+      "dacc_pts": 0.5095541401273884,
+      "thr1": 0.20755621282088477,
+      "thr2": 0.2346315826322525,
+      "dthr": 0.02707536981136774,
+      "thr_ratio": 1.1304483707974236,
+      "both_reliable": true,
+      "acc1": 0.8468789808917198,
+      "acc2": 0.8519745222929936
+    }
+  ],
+  "verdict": "INTERMEDIATE \u2014 threshold is partly, not wholly, redundant with accuracy",
+  "verdict_reasons": [
+    "Pearson r\u00b2=0.48 (reliable models) is in [0.3, 0.7]: accuracy explains about half the threshold variance and leaves about half unexplained. Neither a clean vindication (r\u00b2<0.3) nor a kill (r\u00b2>0.7).",
+    "Robustness: r\u00b2=0.54 including the extrapolated model, 0.40 on log-threshold \u2014 the call is stable across all three.",
+    "The unexplained half is real signal, not noise: models within 2 accuracy points differ by up to 10\u00d7 in threshold (existence proof \u2014 see the equal-accuracy pairs).",
+    "1 model(s) are so contrast-robust their 75% point sits BELOW the swept floor (0.01) \u2014 threshold extrapolated/at-bound, excluded from the primary fit. Re-run with a lower contrast floor (e.g. 0.003) to measure them and firm up the correlation.",
+    "Accuracy spread is 14.4 points (models sit at 75\u201390%, not near ceiling), so the correlation is not suppressed by range restriction."
+  ],
+  "config_hashes": {
+    "resnet18": "b20e9ce294ccf540102394277899a099dd783c26c71332587ccc146aa9c00b3e",
+    "resnet50": "874b99239979863d1a1b6cdb5b76e4ce1df1b132ed89690a1802bf984f9a23cc",
+    "resnet101": "e1a5236a1a3fcbe410018471ceeb8eb23c32367d843dcfab639fbef54cd4a605",
+    "efficientnet_b0": "2e3045337a53c1daa87facc86b49a4c55d178c3fabecf16b7372f194fcd2aa0d",
+    "convnext_tiny": "206a27bd030ae0e7a1a43b5e6ba4cb88afaa8af2cc36e8d6d6d1089d92355271",
+    "vit_small_patch16_224": "6cd3138716bc5396c9cd4389a941ce9009ee0f7db60d3b68204feff146bbba32",
+    "vit_base_patch16_224": "279e9a423807240be78dd9388dfbc7a931ee362ea51ad9e943b4c22e1475e7ef",
+    "deit_small_patch16_224": "daa655b099194a0b6c0cb214f7bab0b82004505af83fe013b00cc046a7497f25",
+    "swin_tiny_patch4_window7_224": "6b29ed1ba5215ca85ad71afe5ec649662cf098b71c97750375d05cb684ab11b0",
+    "mobilenetv3_large_100": "e033877defb7514c0982da7ea0ce38beaaf71ee766933e958ca9cead203b9ce3"
+  },
+  "versions": {
+    "psyvis_ml": "0.0.1",
+    "python": "3.11.0",
+    "numpy": "2.3.0",
+    "torch": "2.6.0+cu124",
+    "timm": "1.0.27",
+    "scipy": "1.15.3"
+  },
+  "wall_clock_seconds": 1673.1,
+  "extrapolated_models": [
+    "resnet101"
+  ],
+  "n_reliable": 9,
+  "correlations_reliable": {
+    "acc_vs_threshold": {
+      "pearson": -0.6908950828634434,
+      "pearson_ci": [
+        -0.9390869712143441,
+        -0.43681872235756813
+      ],
+      "spearman": -0.65,
+      "spearman_ci": [
+        -0.8499999999999999,
+        0.1504166666666606
+      ],
+      "r2": 0.47733601552488425,
+      "n": 9
+    },
+    "acc_vs_slope": {
+      "pearson": 0.8499333628824676,
+      "pearson_ci": [
+        0.7011073845888592,
+        0.9749115871990081
+      ],
+      "spearman": 0.8833333333333333,
+      "spearman_ci": [
+        0.3666666666666667,
+        1.0
+      ],
+      "r2": 0.7223867213407003,
+      "n": 9
+    },
+    "threshold_vs_slope": {
+      "pearson": -0.8031036102975914,
+      "pearson_ci": [
+        -0.9495449949728723,
+        -0.6293565029207313
+      ],
+      "spearman": -0.8166666666666667,
+      "spearman_ci": [
+        -0.9166666666666666,
+        -0.31666666666666665
+      ],
+      "r2": 0.6449754088730255,
+      "n": 9
+    }
+  },
+  "correlations_all_models": {
+    "acc_vs_threshold": {
+      "pearson": -0.7356640399281636,
+      "pearson_ci": [
+        -0.9487153362345591,
+        -0.5116032333977777
+      ],
+      "spearman": -0.7454545454545454,
+      "spearman_ci": [
+        -0.9030303030303028,
+        -0.06666666666666665
+      ],
+      "r2": 0.5412015796434267,
+      "n": 10
+    }
+  },
+  "correlations_log_threshold": {
+    "acc_vs_threshold": {
+      "pearson": -0.6359867013136897,
+      "pearson_ci": [
+        -0.8913306003595576,
+        -0.35511114621390194
+      ],
+      "spearman": -0.65,
+      "spearman_ci": [
+        -0.8499999999999999,
+        0.1504166666666606
+      ],
+      "r2": 0.4044790842478684,
+      "n": 9
+    }
+  }
+}

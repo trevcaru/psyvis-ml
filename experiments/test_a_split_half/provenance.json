@@ -1,0 +1,290 @@
+{
+  "test": "A \u2014 threshold split-half reliability",
+  "timestamp": "2026-07-15T22:48:46.396556+00:00",
+  "dataset_path": "C:\\Users\\glopu\\OneDrive\\Desktop\\Experiments\\Exp_assets\\imagenette2-320\\val",
+  "n_items": 3925,
+  "max_per_class": "full",
+  "per_half_sizes": {
+    "0": [
+      1962,
+      1963
+    ],
+    "1": [
+      1962,
+      1963
+    ],
+    "2": [
+      1962,
+      1963
+    ],
+    "3": [
+      1962,
+      1963
+    ],
+    "4": [
+      1962,
+      1963
+    ]
+  },
+  "per_half_class_counts": {
+    "0": {
+      "A": {
+        "0": 195,
+        "217": 200,
+        "482": 170,
+        "491": 177,
+        "497": 211,
+        "566": 190,
+        "569": 201,
+        "571": 205,
+        "574": 205,
+        "701": 208
+      },
+      "B": {
+        "0": 192,
+        "217": 195,
+        "482": 187,
+        "491": 209,
+        "497": 198,
+        "566": 204,
+        "569": 188,
+        "571": 214,
+        "574": 194,
+        "701": 182
+      }
+    },
+    "1": {
+      "A": {
+        "0": 180,
+        "217": 202,
+        "482": 192,
+        "491": 183,
+        "497": 214,
+        "566": 199,
+        "569": 173,
+        "571": 237,
+        "574": 198,
+        "701": 184
+      },
+      "B": {
+        "0": 207,
+        "217": 193,
+        "482": 165,
+        "491": 203,
+        "497": 195,
+        "566": 195,
+        "569": 216,
+        "571": 182,
+        "574": 201,
+        "701": 206
+      }
+    },
+    "2": {
+      "A": {
+        "0": 199,
+        "217": 194,
+        "482": 166,
+        "491": 188,
+        "497": 203,
+        "566": 186,
+        "569": 187,
+        "571": 218,
+        "574": 214,
+        "701": 207
+      },
+      "B": {
+        "0": 188,
+        "217": 201,
+        "482": 191,
+        "491": 198,
+        "497": 206,
+        "566": 208,
+        "569": 202,
+        "571": 201,
+        "574": 185,
+        "701": 183
+      }
+    },
+    "3": {
+      "A": {
+        "0": 204,
+        "217": 192,
+        "482": 174,
+        "491": 197,
+        "497": 194,
+        "566": 193,
+        "569": 209,
+        "571": 201,
+        "574": 204,
+        "701": 194
+      },
+      "B": {
+        "0": 183,
+        "217": 203,
+        "482": 183,
+        "491": 189,
+        "497": 215,
+        "566": 201,
+        "569": 180,
+        "571": 218,
+        "574": 195,
+        "701": 196
+      }
+    },
+    "4": {
+      "A": {
+        "0": 188,
+        "217": 189,
+        "482": 174,
+        "491": 209,
+        "497": 209,
+        "566": 192,
+        "569": 192,
+        "571": 207,
+        "574": 202,
+        "701": 200
+      },
+      "B": {
+        "0": 199,
+        "217": 206,
+        "482": 183,
+        "491": 177,
+        "497": 200,
+        "566": 202,
+        "569": 197,
+        "571": 212,
+        "574": 197,
+        "701": 190
+      }
+    }
+  },
+  "full_class_counts": {
+    "0": 387,
+    "217": 395,
+    "482": 357,
+    "491": 386,
+    "497": 409,
+    "566": 394,
+    "569": 389,
+    "571": 419,
+    "574": 399,
+    "701": 390
+  },
+  "split_seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "sweep_seed": 0,
+  "n_boot": 2000,
+  "boot_seed": 12345,
+  "target": 0.75,
+  "models": [
+    "resnet50",
+    "vit_small_patch16_224"
+  ],
+  "weight_source": "timm create_model(pretrained=True) \u2014 ImageNet-1k",
+  "model_clean_top1": {
+    "resnet50": 0.975,
+    "vit_small_patch16_224": 0.975
+  },
+  "levels": {
+    "contrast": [
+      0.01,
+      0.019193831036664843,
+      0.03684031498640387,
+      0.07071067811865475,
+      0.13572088082974532,
+      0.26050036547934563,
+      0.5
+    ],
+    "degradation": [
+      0.0,
+      0.13333333333333333,
+      0.26666666666666666,
+      0.4,
+      0.5333333333333333,
+      0.6666666666666666,
+      0.8
+    ]
+  },
+  "image_size": 224,
+  "gallery_reference_gap": {
+    "contrast": 0.1458,
+    "degradation": 0.03588
+  },
+  "gallery_reference_thresholds": {
+    "contrast": {
+      "resnet50": 0.04971,
+      "vit_small_patch16_224": 0.1955
+    },
+    "degradation": {
+      "resnet50": 0.08669,
+      "vit_small_patch16_224": 0.1226
+    }
+  },
+  "versions": {
+    "psyvis_ml": "0.0.1",
+    "python": "3.11.0",
+    "numpy": "2.3.0",
+    "torch": "2.6.0+cu124",
+    "timm": "1.0.27",
+    "scipy": "1.15.3"
+  },
+  "config_hashes": {
+    "contrast|resnet50|s0|A": "a47ac2e35b45448c46dd37200598e9af13299b40f3fdb3a956d1ab9064207f63",
+    "contrast|resnet50|s0|B": "c9385d99e541f0e04df148699d4a111bd19087e1f580c05b01cddcaabe6ee671",
+    "contrast|vit_small_patch16_224|s0|A": "b6a10a22f32f535b048486ec88b30bde2535e8e5663a39d66a8828c6d27d3651",
+    "contrast|vit_small_patch16_224|s0|B": "255138d853373edcac7fad85911133b367a7f5f43bfbe49c0a5a31b85de24cb0",
+    "degradation|resnet50|s0|A": "8a18145640f33cd8915b6e53a99c14629b1bf992504a57e97bfe012961446b42",
+    "degradation|resnet50|s0|B": "7b8613e66cd5c237b6189c87b8323d87a45afed3cc49e6347c34704c256e193a",
+    "degradation|vit_small_patch16_224|s0|A": "328b0f4d76b59e7f5398102f4674351b6a65486cea6a6f63e8f3a6332272fa0d",
+    "degradation|vit_small_patch16_224|s0|B": "177724b6a7c9f6df22531b6431938f1d1df724cb201e3ebfce9bf700a8edf354",
+    "contrast|resnet50|s1|A": "5d4761a3dec7376a6184c5b801fc725ce4f7abdd508d8dce04555c7e30dae994",
+    "contrast|resnet50|s1|B": "20ce1ba7d56451e60bb96012bd1363b202641dd37d68fbdd2afc3d2111e593be",
+    "contrast|vit_small_patch16_224|s1|A": "df22045700dbc37353e404b2863ce3cd1c99c0130e660b1fa2d8e5ec365c9681",
+    "contrast|vit_small_patch16_224|s1|B": "d6b5f2d68545fcd78e3865e29ceee6473ac2907a31ccb472532e3da5cccdcece",
+    "degradation|resnet50|s1|A": "2641e282b6e02dc5b8584da3a0ab39b6e590d0ceff87beef7893177563dab46b",
+    "degradation|resnet50|s1|B": "1077744448d64e5deb396595da88f32d57b17868214b3a228e9e83baa20b0525",
+    "degradation|vit_small_patch16_224|s1|A": "df4d3310a864faaa199171747d7aba8c54e18bdfcdcd5a40aec69d3ed09f6b31",
+    "degradation|vit_small_patch16_224|s1|B": "d388d6b37fbe2e7c5c8353003c9fb311dafe3a3cd9e9938ad704577a030c8e0a",
+    "contrast|resnet50|s2|A": "965c41689858a5c07493fde08acaae11f8c65149b2b136f6e828020e78dd63aa",
+    "contrast|resnet50|s2|B": "e44749aa83311bb13da3052d77d42d8ec99167770274fbf57f4ea6ebcb011449",
+    "contrast|vit_small_patch16_224|s2|A": "936ae71640a4a7cf7c5cddb3db7f3101d518d66348b368cfca3d48ce113638ec",
+    "contrast|vit_small_patch16_224|s2|B": "f7571fc928fed27a16b882ab05861b2d350fcd654009c4e800369d58ce560444",
+    "degradation|resnet50|s2|A": "0fb394234240f8c3b4c507fb599fd712f997f4d8d968dd3d744cb9fb1c7e3db0",
+    "degradation|resnet50|s2|B": "e365f33d730899c39b230666db4b73e226c57d4ff9c9901e9db95e9ffd07a7e1",
+    "degradation|vit_small_patch16_224|s2|A": "4ac8da2879c67b58e8370cb478feb9d310153ac7f61078664133aef8a31acef9",
+    "degradation|vit_small_patch16_224|s2|B": "3d4b24032a63edc3f53aa8b3b5cd21ac7fb6c68fabfeb838bb39425100d687eb",
+    "contrast|resnet50|s3|A": "3df22a5ed036a7d2cdd53602621531013a15f7b933c85579924536e476b98417",
+    "contrast|resnet50|s3|B": "55f1b9fa2229a24f979362fb24d7fe43d7f060d2e317be5a4d7c7fefe1c6b888",
+    "contrast|vit_small_patch16_224|s3|A": "49469e652e444a86f1ce3966c40a43afdea210ec4993ceafbcaa2bf31302d918",
+    "contrast|vit_small_patch16_224|s3|B": "8ac9f0803e7438071cb43e4d89f2caa8592f9885a0b744332999e60430bbac0b",
+    "degradation|resnet50|s3|A": "b18f7d40b6fb0368b0aa8a198f76785afa4b04ac1ec310ef7ad0eed7a0b8e7ea",
+    "degradation|resnet50|s3|B": "7f09210c022e26d48df5cb06815f33ef63cdd88513e2043b24c3c39de5134e27",
+    "degradation|vit_small_patch16_224|s3|A": "060ac893340ec77ad3cc609c6d32af8e73a56b7cf329cf9992baaa1783adedb0",
+    "degradation|vit_small_patch16_224|s3|B": "233e249a5252d9697303ad94a88f3d82cd1659d4e40d15287e18bbae4ef11354",
+    "contrast|resnet50|s4|A": "1f8472aaeda597333773517f48e28c9ff57b66b9c73e354e8c2f9b7efe9a7b9f",
+    "contrast|resnet50|s4|B": "44629b6a47368d127d8e17d7f77030af5423ced58e9426a9044f6a54d3a5202b",
+    "contrast|vit_small_patch16_224|s4|A": "79868a0fb749e4359eb396091704a94950fc810a4962dab5da0548d4c82c1404",
+    "contrast|vit_small_patch16_224|s4|B": "69f299204ab336318e1c945c0034c49090cd870807c9684147ee56c94ac44fe6",
+    "degradation|resnet50|s4|A": "92769607714caf7d2f8e5ce503d4d27fe165a9102664551e0fc2d0ea8de072fd",
+    "degradation|resnet50|s4|B": "3a5cf9c1d57c0560ee528eb24dffec076b3bb317856cd5ec63ac795fae4d4b6c",
+    "degradation|vit_small_patch16_224|s4|A": "85d35cc3f73d422085cac286cca43163ce87733b10a285ae8bf82556bd5bae00",
+    "degradation|vit_small_patch16_224|s4|B": "5ba103f41bcad90009d342596a6368d76d1ac2d698de2bc27a7461c773518904"
+  },
+  "verdict": "MIXED \u2014 PASS (contrast) / AMBIGUOUS (degradation)",
+  "verdict_reasons": [
+    "the model ranking is robust on all suites (ranking held 20/20); the *magnitude* is a reproducible property for contrast but item-sampling-fragile for degradation.",
+    "**contrast: PASS** \u2014 ranking held 10/10; worst split-half |\u0394| is only 12% of the between-model gap; CIs overlap in 80% of comparisons",
+    "**degradation: AMBIGUOUS** \u2014 ranking held 10/10 (direction robust), but split-half |\u0394| reaches 67% of the between-model gap (median 26%): the magnitude is item-sampling-fragile at this n"
+  ],
+  "wall_clock_seconds": 3208.6,
+  "per_suite_verdict": {
+    "contrast": "PASS",
+    "degradation": "AMBIGUOUS"
+  },
+  "device": "cuda"
+}

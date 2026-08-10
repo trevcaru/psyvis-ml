@@ -51,7 +51,29 @@
       "Bash(python -c \"print\\(sum\\(1 for _ in open\\('outputs/real_degradation_type2/per_item.csv'\\)\\)-1\\)\")",
       "Bash(python examples/real_contrast_type2.py)",
       "Bash(python examples/real_distractor_type2.py)",
-      "Bash(sort -k2)"
+      "Bash(sort -k2)",
+      "Bash(python -c \"import sys; print\\(sys.version\\)\")",
+      "Bash(python -c \"import torch, timm; print\\('torch', torch.__version__\\); print\\('timm', timm.__version__\\); print\\('cuda', torch.cuda.is_available\\(\\)\\); print\\('device', torch.cuda.get_device_name\\(0\\) if torch.cuda.is_available\\(\\) else 'CPU only'\\)\")",
+      "Bash(python -c \"import os; print\\('cores', os.cpu_count\\(\\)\\); print\\('psutil not available'\\)\")",
+      "Bash(mkdir -p \"C:/Users/glopu/OneDrive/Desktop/Experiments/psyvis-ml/experiments/test_a_split_half\" && echo created)",
+      "Bash(python experiments/test_a_split_half/run_split_half.py --seeds 0 --max-per-class 5 --n-boot 200 --out \"C:/Users/glopu/AppData/Local/Temp/claude/c--Users-glopu-OneDrive-Desktop-Experiments-psyvis-ml/1f6b245f-a8ac-4f45-ba9a-0c389e16913d/scratchpad/plumbing\")",
+      "Bash(python experiments/test_a_split_half/run_split_half.py --seeds 0 --max-per-class 5 --n-boot 100 --out \"C:/Users/glopu/AppData/Local/Temp/claude/c--Users-glopu-OneDrive-Desktop-Experiments-psyvis-ml/1f6b245f-a8ac-4f45-ba9a-0c389e16913d/scratchpad/plumbing2\")",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(python experiments/test_a_split_half/run_split_half.py --seeds 0)",
+      "Bash(python experiments/test_a_split_half/run_split_half.py --seeds 0 --out \"C:/Users/glopu/AppData/Local/Temp/claude/c--Users-glopu-OneDrive-Desktop-Experiments-psyvis-ml/1f6b245f-a8ac-4f45-ba9a-0c389e16913d/scratchpad/gpu_seed0\")",
+      "Bash(python experiments/test_a_split_half/run_split_half.py --seeds 0,1,2,3,4)",
+      "Bash(python experiments/test_a_split_half/run_split_half.py --regen)",
+      "Bash(python -c \"import json; p=json.load\\(open\\('provenance.json'\\)\\); print\\('verdict:', p['verdict']\\); print\\('per_suite:', p['per_suite_verdict']\\); print\\('device:', p['device']\\); print\\('n_items:', p['n_items'], '| wall_clock_s:', p['wall_clock_seconds']\\); print\\('weight_source:', p['weight_source']\\); print\\('levels:', p['levels']\\)\")",
+      "Bash(grep -nE \"^#{1,4} \" README.md)",
+      "Bash(python experiments/test_c_threshold_vs_accuracy/preflight_clean_acc.py)",
+      "Bash(python experiments/test_c_threshold_vs_accuracy/run_threshold_vs_accuracy.py)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('experiments/test_c_threshold_vs_accuracy/run_threshold_vs_accuracy.py'\\).read\\(\\)\\); print\\('syntax OK'\\)\")",
+      "Bash(python experiments/test_c_threshold_vs_accuracy/run_threshold_vs_accuracy.py --regen)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('experiments/test_c_threshold_vs_accuracy/run_threshold_vs_accuracy.py', encoding='utf-8'\\).read\\(\\)\\); print\\('syntax OK'\\)\")"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\glopu\\OneDrive\\Desktop\\Experiments\\psyvis-ml\\experiments",
+      "c:\\Users\\glopu\\.claude\\projects\\c--Users-glopu-OneDrive-Desktop-Experiments-psyvis-ml\\memory"
     ]
   }
 }

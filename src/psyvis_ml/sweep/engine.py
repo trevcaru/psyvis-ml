@@ -11,8 +11,11 @@ Design constraints:
     independently, so the work is embarrassingly parallel. Pass ``map_fn`` (e.g. a thread
     pool's ``map``) to parallelize across levels; the default is sequential ``map``.
   * Reproducible: a resolved integer seed drives a per-element ``numpy`` RNG derived from
-    ``SeedSequence([seed, level_index, image_index])`` — independent of evaluation order,
-    so parallel and sequential runs with the same seed produce identical counts.
+    ``SeedSequence([seed, level_key, image_index])``, where ``level_key`` digests the level's
+    *value* (together with the suite/condition/stimulus identity) rather than its position in
+    ``levels``. Runs with the same seed therefore produce identical counts regardless of
+    evaluation order, and a given level's stimulus is unchanged by reordering, extending, or
+    truncating the level list — so overlapping levels of two sweeps really are the same stimuli.
 
 The stimulus contract is ``apply_stimulus(image, level, rng)`` (or, when ``batched=True``,
 ``apply_stimulus(images, level, rng)``): any *stochastic* manipulation must draw from the
@@ -21,6 +24,7 @@ supplied ``rng`` so runs stay reproducible; deterministic manipulations simply i
 
 from __future__ import annotations
 
+import hashlib
 import warnings
 
 import numpy as np
@@ -29,6 +33,11 @@ from .bundle import RunBundle, compute_config_hash, data_fingerprint, library_ve
 from .scoring import score_logits
 
 __all__ = ["run_sweep"]
+
+#: Identifier of the stimulus-RNG keying scheme, recorded in the hashed config. Bump this if
+#: the key derivation ever changes again: it is what stops a run made under one scheme from
+#: hashing identically to a run made under another.
+RNG_KEYING = "level_value_sha256_v2"
 
 
 def _resolve_seed(seed) -> int:
@@ -40,6 +49,24 @@ def _resolve_seed(seed) -> int:
 def _child_rng(seed: int, *keys: int) -> np.random.Generator:
     """Deterministic, order-independent RNG for one sweep element."""
     return np.random.default_rng(np.random.SeedSequence([seed, *keys]))
+
+
+def _level_key(stream_id: str, level: float) -> int:
+    """Stable 64-bit RNG key for one stimulus level of one condition.
+
+    Keyed to the level's *value*, never its position in ``levels``: a level's stimulus must be
+    the same whether it was swept first, last, alone, or alongside other levels, so that two
+    sweeps sharing a level really do show the same thing there. ``stream_id``
+    (suite | condition | stimulus) keeps two different manipulations from colliding when they
+    happen to sweep the same number.
+
+    The float is canonicalized with ``%.17g``, which round-trips an IEEE-754 double exactly, so
+    ``0.1``, ``0.10`` and ``1e-1`` — one and the same double — canonicalize identically; the
+    ``+ 0.0`` folds ``-0.0`` onto ``0.0``. The digest is SHA-256, not the builtin ``hash()``,
+    which is salted by ``PYTHONHASHSEED`` and would differ between processes.
+    """
+    canonical = f"{stream_id}|{float(level) + 0.0:.17g}"
+    return int.from_bytes(hashlib.sha256(canonical.encode("utf-8")).digest()[:8], "big")
 
 
 def _callable_name(fn, explicit) -> str:
@@ -159,17 +186,25 @@ def run_sweep(
     model_id, stimulus_id = _resolve_and_check_names(
         model, model_name, apply_stimulus, stimulus_name
     )
+    # Identity of this sweep's RNG stream. `measure()` supplies suite/condition in
+    # extra_config; folding them in with the stimulus name keeps two different manipulations
+    # from drawing the same noise when they sweep the same numeric level.
+    extra = dict(extra_config) if extra_config else {}
+    stream_id = f"{extra.get('suite', '')}|{extra.get('condition', '')}|{stimulus_id}"
 
     def score_level(i: int):
         level = levels[i]
+        # Key the RNG to the level's VALUE, not its index: reordering, extending or truncating
+        # `levels` must not re-randomize a level that was already measured.
+        level_key = _level_key(stream_id, level)
         if batched:
-            rng = _child_rng(seed, i)
+            rng = _child_rng(seed, level_key)
             stim = apply_stimulus(images, level, rng)
             logits = np.asarray(model(stim), dtype=float)
         else:
             rows = []
             for j in range(n_images):
-                rng = _child_rng(seed, i, j)
+                rng = _child_rng(seed, level_key, j)
                 stim = apply_stimulus(images[j], level, rng)
                 rows.append(np.asarray(model(stim), dtype=float).ravel())
             logits = np.vstack(rows)
@@ -206,6 +241,10 @@ def run_sweep(
         "top_k": int(top_k),
         "batched": bool(batched),
         "seed": seed,
+        # The RNG keying scheme, hashed so a bundle keyed by level *value* can never collide
+        # with a pre-change bundle keyed by level *index*: same seed and same config would
+        # otherwise hash identically while carrying different stimuli on a stochastic suite.
+        "rng_keying": RNG_KEYING,
         "n_images": n_images,
         "data_fingerprint": data_fingerprint(images, labels),
         "model": model_id,

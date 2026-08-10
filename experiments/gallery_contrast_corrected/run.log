@@ -1,0 +1,25 @@
+==============================================================================
+Gallery contrast re-sweep — CORRECTED instrument (REAL DATA ONLY)
+==============================================================================
+device: cuda:NVIDIA GeForce RTX 4070 SUPER · torch 2.6.0+cu124 · timm 1.0.27
+[gate] dataset C:\Users\glopu\OneDrive\Desktop\Experiments\Exp_assets\imagenette2-320\val · 3925 real images (== expected 3925) · 5.9s
+[gate] levels geomspace(0.001, 0.5, 11) (ratio 1.862):
+       0.001 0.0018616 0.0034657 0.006452 0.012011 0.022361 0.041628 0.077496 0.14427 0.26858 0.5
+
+[resnet50] loading pretrained ...
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  [gate] clean top-1 = 0.8627 (chance 0.0010) PASS · 25.6M · tag a1_in1k · 12.8s
+  ceiling=0.8296 CI[0.8247,0.8344] · criterion=0.4153
+  threshold=0.010249 CI=[0.010067,0.010431] slope=64.67 conv=True at_bound=—
+  fit R²=0.9906 max_resid=0.0948 resid@lowest=-0.0037 (negative) | sweep 201.1s + per-item 43175 rows
+
+[vit_small_patch16_224] loading pretrained ...
+  [gate] clean top-1 = 0.8227 (chance 0.0010) PASS · 22.1M · tag augreg_in21k_ft_in1k · 11.2s
+  ceiling=0.7698 CI[0.7636,0.7764] · criterion=0.3854
+  threshold=0.029735 CI=[0.029122,0.030389] slope=19.05 conv=True at_bound=—
+  fit R²=0.9922 max_resid=0.0649 resid@lowest=-0.0014 (negative) | sweep 173.4s + per-item 43175 rows
+
+total sweep wall-clock: 6.9 min
+
+wrote corrected gallery contrast outputs -> C:\Users\glopu\OneDrive\Desktop\Experiments\psyvis-ml\outputs\gallery_contrast_corrected
+outputs/gallery/ untouched (the 'before' in the methods story).

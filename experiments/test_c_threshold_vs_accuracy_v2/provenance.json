@@ -1,0 +1,743 @@
+{
+  "test": "C v2 \u2014 threshold vs accuracy, two suites, full persistence",
+  "timestamp": "2026-07-16T12:34:26.644065+00:00",
+  "dataset_path": "C:\\Users\\glopu\\OneDrive\\Desktop\\Experiments\\Exp_assets\\imagenette2-320\\val",
+  "n_items": 3925,
+  "image_size": 224,
+  "device": "cuda:NVIDIA GeForce RTX 4070 SUPER",
+  "models_requested": [
+    "resnet18",
+    "resnet50",
+    "resnet101",
+    "efficientnet_b0",
+    "convnext_tiny",
+    "vit_small_patch16_224",
+    "vit_base_patch16_224",
+    "deit_small_patch16_224",
+    "swin_tiny_patch4_window7_224",
+    "mobilenetv3_large_100"
+  ],
+  "models_used": [
+    "convnext_tiny",
+    "deit_small_patch16_224",
+    "efficientnet_b0",
+    "mobilenetv3_large_100",
+    "resnet101",
+    "resnet18",
+    "resnet50",
+    "swin_tiny_patch4_window7_224",
+    "vit_base_patch16_224",
+    "vit_small_patch16_224"
+  ],
+  "dropped": [],
+  "weight_source": "timm create_model(pretrained=True) \u2014 ImageNet-1k (default tags)",
+  "weight_tags": {
+    "resnet18": "a1_in1k",
+    "resnet50": "a1_in1k",
+    "resnet101": "a1h_in1k",
+    "efficientnet_b0": "ra_in1k",
+    "convnext_tiny": "in12k_ft_in1k",
+    "vit_small_patch16_224": "augreg_in21k_ft_in1k",
+    "vit_base_patch16_224": "augreg2_in21k_ft_in1k",
+    "deit_small_patch16_224": "fb_in1k",
+    "swin_tiny_patch4_window7_224": "ms_in1k",
+    "mobilenetv3_large_100": "ra_in1k"
+  },
+  "level_grids": {
+    "contrast": [
+      0.001,
+      0.0019947365987750282,
+      0.003978974098492568,
+      0.007937005259840991,
+      0.015832234876474737,
+      0.0315811383485066,
+      0.06299605249474363,
+      0.12566053148961803,
+      0.250659661183863,
+      0.5
+    ],
+    "degradation": [
+      0.0,
+      0.13333333333333333,
+      0.26666666666666666,
+      0.4,
+      0.5333333333333333,
+      0.6666666666666666,
+      0.8
+    ]
+  },
+  "level_grid_notes": {
+    "contrast": "geomspace(0.001, 0.5, 10), weibull; floor lowered from v1's 0.01",
+    "degradation": "linspace(0.0, 0.8, 7), logistic/decreasing; gallery levels verbatim"
+  },
+  "contrast_step_ratio_v2": 1.9947365987750283,
+  "v1_dir": "C:\\Users\\glopu\\OneDrive\\Desktop\\Experiments\\psyvis-ml\\experiments\\test_c_threshold_vs_accuracy",
+  "sweep_seed": 0,
+  "target": 0.75,
+  "n_boot": 2000,
+  "boot_seed": 12345,
+  "equal_acc_window_pts": 1.0,
+  "clean_top1": {
+    "resnet18": 0.7541401273885351,
+    "resnet50": 0.8626751592356688,
+    "resnet101": 0.898343949044586,
+    "efficientnet_b0": 0.8468789808917198,
+    "convnext_tiny": 0.8817834394904459,
+    "vit_small_patch16_224": 0.8226751592356688,
+    "vit_base_patch16_224": 0.8950318471337579,
+    "deit_small_patch16_224": 0.8573248407643312,
+    "swin_tiny_patch4_window7_224": 0.8598726114649682,
+    "mobilenetv3_large_100": 0.8519745222929936
+  },
+  "verdict_per_suite": {
+    "contrast": "INTERMEDIATE \u2014 partly, not wholly, redundant with accuracy  \u26a0 CONFLICTS WITH SPEARMAN",
+    "degradation": "INTERMEDIATE \u2014 partly, not wholly, redundant with accuracy  \u26a0 CONFLICTS WITH SPEARMAN"
+  },
+  "verdict_reasons": {
+    "contrast": [
+      "Pearson r\u00b2=0.54 is in [0.3, 0.7]: accuracy explains part of the contrast threshold and leaves part unexplained.",
+      "**n=10 cannot separate 'intermediate' from 'kill':** the r\u00b2 bootstrap CI [0.28, 0.98] does NOT exclude 0.7. On the correlation alone this test is underpowered; the equal-accuracy pairs carry the argument by themselves.",
+      "Leverage: r\u00b2=0.54 full; drops to 0.47 without resnet101, rises to 0.70 without mobilenetv3_large_100; without resnet18 it is 0.61.",
+      "Existence proof: models within 1 accuracy point differ by up to 3.9\u00d7 in contrast threshold (both measured)."
+    ],
+    "degradation": [
+      "Pearson r\u00b2=0.45 is in [0.3, 0.7]: accuracy explains part of the degradation threshold and leaves part unexplained.",
+      "**n=10 cannot separate 'intermediate' from 'kill':** the r\u00b2 bootstrap CI [0.01, 0.83] does NOT exclude 0.7. On the correlation alone this test is underpowered; the equal-accuracy pairs carry the argument by themselves.",
+      "Leverage: r\u00b2=0.45 full; drops to 0.24 without resnet18, rises to 0.51 without resnet101; without resnet18 it is 0.24.  The relationship depends heavily on single points \u2014 read it as leverage, not a robust relationship."
+    ]
+  },
+  "analysis": {
+    "contrast": {
+      "corr": {
+        "pearson": -0.7326279200355055,
+        "pearson_ci": [
+          -0.9898985721196437,
+          -0.5330961475112487
+        ],
+        "spearman": -0.9030303030303028,
+        "spearman_ci": [
+          -0.9757575757575757,
+          -0.4545454545454545
+        ],
+        "r2": 0.5367436692155511,
+        "r2_ci": [
+          0.2841915058271971,
+          0.9798991831447236
+        ],
+        "r2_ci_excludes_0.7": false,
+        "r2_ci_excludes_0.3": false,
+        "n": 10
+      },
+      "corr_all": {
+        "pearson": -0.7326279200355055,
+        "pearson_ci": [
+          -0.9898985721196437,
+          -0.5330961475112487
+        ],
+        "spearman": -0.9030303030303028,
+        "spearman_ci": [
+          -0.9757575757575757,
+          -0.4545454545454545
+        ],
+        "r2": 0.5367436692155511,
+        "r2_ci": [
+          0.2841915058271971,
+          0.9798991831447236
+        ],
+        "r2_ci_excludes_0.7": false,
+        "r2_ci_excludes_0.3": false,
+        "n": 10
+      },
+      "corr_log": {
+        "pearson": -0.7564229801887704,
+        "pearson_ci": [
+          -0.9643098436475955,
+          -0.5776093501808838
+        ],
+        "spearman": -0.9030303030303028,
+        "spearman_ci": [
+          -0.9757575757575757,
+          -0.4545454545454545
+        ],
+        "r2": 0.572175724957661,
+        "r2_ci": [
+          0.3336325718973815,
+          0.9298934757667404
+        ],
+        "r2_ci_excludes_0.7": false,
+        "r2_ci_excludes_0.3": true,
+        "n": 10
+      },
+      "corr_slope_acc": {
+        "pearson": 0.5973464555602316,
+        "pearson_ci": [
+          0.5257926183979184,
+          0.9673435969151141
+        ],
+        "spearman": 0.9757575757575757,
+        "spearman_ci": [
+          0.7939393939393938,
+          0.9999999999999999
+        ],
+        "r2": 0.3568227879703717,
+        "r2_ci": [
+          0.2764578777782046,
+          0.9357536369076238
+        ],
+        "r2_ci_excludes_0.7": false,
+        "r2_ci_excludes_0.3": false,
+        "n": 10
+      },
+      "corr_slope_thr": {
+        "pearson": -0.6194423720762544,
+        "pearson_ci": [
+          -0.9170448822763796,
+          -0.5071475058910712
+        ],
+        "spearman": -0.9393939393939393,
+        "spearman_ci": [
+          -0.9878787878787878,
+          -0.5878787878787878
+        ],
+        "r2": 0.3837088523234568,
+        "r2_ci": [
+          0.25719859347800067,
+          0.8409713197640328
+        ],
+        "r2_ci_excludes_0.7": false,
+        "r2_ci_excludes_0.3": false,
+        "n": 10
+      },
+      "leverage": {
+        "r2_full": 0.5367436692155511,
+        "loo": [
+          {
+            "dropped": "resnet18",
+            "r2": 0.6057472756502218
+          },
+          {
+            "dropped": "resnet50",
+            "r2": 0.5434503318894983
+          },
+          {
+            "dropped": "resnet101",
+            "r2": 0.47069696624302354
+          },
+          {
+            "dropped": "efficientnet_b0",
+            "r2": 0.5953586096104739
+          },
+          {
+            "dropped": "convnext_tiny",
+            "r2": 0.5100178239877394
+          },
+          {
+            "dropped": "vit_small_patch16_224",
+            "r2": 0.5052805588632111
+          },
+          {
+            "dropped": "vit_base_patch16_224",
+            "r2": 0.4866528743373472
+          },
+          {
+            "dropped": "deit_small_patch16_224",
+            "r2": 0.5474142109207291
+          },
+          {
+            "dropped": "swin_tiny_patch4_window7_224",
+            "r2": 0.5403483659674735
+          },
+          {
+            "dropped": "mobilenetv3_large_100",
+            "r2": 0.704486217459047
+          }
+        ],
+        "r2_min": {
+          "dropped": "resnet101",
+          "r2": 0.47069696624302354
+        },
+        "r2_max": {
+          "dropped": "mobilenetv3_large_100",
+          "r2": 0.704486217459047
+        },
+        "r2_without_leverage_model": 0.6057472756502218
+      },
+      "pairs": [
+        {
+          "m1": "deit_small_patch16_224",
+          "m2": "mobilenetv3_large_100",
+          "dacc_pts": 0.5350318471337601,
+          "thr1": 0.05902521355048863,
+          "thr2": 0.23037360018011255,
+          "thr_ratio": 3.902969363813601,
+          "both_reliable": true,
+          "acc1": 0.8573248407643312,
+          "acc2": 0.8519745222929936
+        },
+        {
+          "m1": "swin_tiny_patch4_window7_224",
+          "m2": "mobilenetv3_large_100",
+          "dacc_pts": 0.7898089171974543,
+          "thr1": 0.06313535904788518,
+          "thr2": 0.23037360018011255,
+          "thr_ratio": 3.6488839796632035,
+          "both_reliable": true,
+          "acc1": 0.8598726114649682,
+          "acc2": 0.8519745222929936
+        },
+        {
+          "m1": "resnet101",
+          "m2": "vit_base_patch16_224",
+          "dacc_pts": 0.33121019108280914,
+          "thr1": 0.010213493645802197,
+          "thr2": 0.024782736181010193,
+          "thr_ratio": 2.4264700248965285,
+          "both_reliable": true,
+          "acc1": 0.898343949044586,
+          "acc2": 0.8950318471337579
+        },
+        {
+          "m1": "resnet50",
+          "m2": "swin_tiny_patch4_window7_224",
+          "dacc_pts": 0.28025477707006585,
+          "thr1": 0.046542774441060156,
+          "thr2": 0.06313535904788518,
+          "thr_ratio": 1.3565018374191937,
+          "both_reliable": true,
+          "acc1": 0.8626751592356688,
+          "acc2": 0.8598726114649682
+        },
+        {
+          "m1": "resnet50",
+          "m2": "deit_small_patch16_224",
+          "dacc_pts": 0.5350318471337601,
+          "thr1": 0.046542774441060156,
+          "thr2": 0.05902521355048863,
+          "thr_ratio": 1.2681928453843188,
+          "both_reliable": true,
+          "acc1": 0.8626751592356688,
+          "acc2": 0.8573248407643312
+        },
+        {
+          "m1": "efficientnet_b0",
+          "m2": "mobilenetv3_large_100",
+          "dacc_pts": 0.5095541401273884,
+          "thr1": 0.2011226723402534,
+          "thr2": 0.23037360018011255,
+          "thr_ratio": 1.1454382417431948,
+          "both_reliable": true,
+          "acc1": 0.8468789808917198,
+          "acc2": 0.8519745222929936
+        },
+        {
+          "m1": "deit_small_patch16_224",
+          "m2": "swin_tiny_patch4_window7_224",
+          "dacc_pts": 0.2547770700636942,
+          "thr1": 0.05902521355048863,
+          "thr2": 0.06313535904788518,
+          "thr_ratio": 1.0696337251517243,
+          "both_reliable": true,
+          "acc1": 0.8573248407643312,
+          "acc2": 0.8598726114649682
+        }
+      ],
+      "extrap_names": []
+    },
+    "degradation": {
+      "corr": {
+        "pearson": 0.6671908780557215,
+        "pearson_ci": [
+          0.03013186305601012,
+          0.9113070043371274
+        ],
+        "spearman": 0.4666666666666666,
+        "spearman_ci": [
+          -0.29696969696969694,
+          0.9030303030303028
+        ],
+        "r2": 0.4451436677607647,
+        "r2_ci": [
+          0.005269297866272445,
+          0.8304804564966255
+        ],
+        "r2_ci_excludes_0.7": false,
+        "r2_ci_excludes_0.3": false,
+        "n": 10
+      },
+      "corr_all": {
+        "pearson": 0.6671908780557215,
+        "pearson_ci": [
+          0.03013186305601012,
+          0.9113070043371274
+        ],
+        "spearman": 0.4666666666666666,
+        "spearman_ci": [
+          -0.29696969696969694,
+          0.9030303030303028
+        ],
+        "r2": 0.4451436677607647,
+        "r2_ci": [
+          0.005269297866272445,
+          0.8304804564966255
+        ],
+        "r2_ci_excludes_0.7": false,
+        "r2_ci_excludes_0.3": false,
+        "n": 10
+      },
+      "corr_log": {
+        "pearson": 0.8392213658309192,
+        "pearson_ci": [
+          0.05151023558013661,
+          0.9729086838630244
+        ],
+        "spearman": 0.4666666666666666,
+        "spearman_ci": [
+          -0.29696969696969694,
+          0.9030303030303028
+        ],
+        "r2": 0.7042925008671136,
+        "r2_ci": [
+          0.007873049314781331,
+          0.9465513071390663
+        ],
+        "r2_ci_excludes_0.7": false,
+        "r2_ci_excludes_0.3": false,
+        "n": 10
+      },
+      "corr_slope_acc": {
+        "pearson": 0.2882652871143772,
+        "pearson_ci": [
+          -0.18807803320558616,
+          0.7696301046885594
+        ],
+        "spearman": 0.33333333333333326,
+        "spearman_ci": [
+          -0.43030303030303024,
+          0.8060606060606059
+        ],
+        "r2": 0.08309687575513433,
+        "r2_ci": [
+          0.0006825702778332797,
+          0.6017366334684762
+        ],
+        "r2_ci_excludes_0.7": true,
+        "r2_ci_excludes_0.3": false,
+        "n": 10
+      },
+      "corr_slope_thr": {
+        "pearson": 0.7694244422261688,
+        "pearson_ci": [
+          0.5724860207605229,
+          0.966142803797508
+        ],
+        "spearman": 0.9151515151515152,
+        "spearman_ci": [
+          0.5757575757575757,
+          0.9999999999999999
+        ],
+        "r2": 0.5920139722950509,
+        "r2_ci": [
+          0.32774024852183214,
+          0.9334319176134463
+        ],
+        "r2_ci_excludes_0.7": false,
+        "r2_ci_excludes_0.3": true,
+        "n": 10
+      },
+      "leverage": {
+        "r2_full": 0.4451436677607647,
+        "loo": [
+          {
+            "dropped": "resnet18",
+            "r2": 0.23616654852113075
+          },
+          {
+            "dropped": "resnet50",
+            "r2": 0.46385174495685283
+          },
+          {
+            "dropped": "resnet101",
+            "r2": 0.5105078670237279
+          },
+          {
+            "dropped": "efficientnet_b0",
+            "r2": 0.45932586149530485
+          },
+          {
+            "dropped": "convnext_tiny",
+            "r2": 0.46218207376801546
+          },
+          {
+            "dropped": "vit_small_patch16_224",
+            "r2": 0.4916565766563669
+          },
+          {
+            "dropped": "vit_base_patch16_224",
+            "r2": 0.4408716141617598
+          },
+          {
+            "dropped": "deit_small_patch16_224",
+            "r2": 0.46506591551689214
+          },
+          {
+            "dropped": "swin_tiny_patch4_window7_224",
+            "r2": 0.4440585214723108
+          },
+          {
+            "dropped": "mobilenetv3_large_100",
+            "r2": 0.48079795568036104
+          }
+        ],
+        "r2_min": {
+          "dropped": "resnet18",
+          "r2": 0.23616654852113075
+        },
+        "r2_max": {
+          "dropped": "resnet101",
+          "r2": 0.5105078670237279
+        },
+        "r2_without_leverage_model": 0.23616654852113075
+      },
+      "pairs": [
+        {
+          "m1": "deit_small_patch16_224",
+          "m2": "mobilenetv3_large_100",
+          "dacc_pts": 0.5350318471337601,
+          "thr1": 0.16698835963304873,
+          "thr2": 0.062138818538847784,
+          "thr_ratio": 2.6873436534466997,
+          "both_reliable": true,
+          "acc1": 0.8573248407643312,
+          "acc2": 0.8519745222929936
+        },
+        {
+          "m1": "resnet101",
+          "m2": "vit_base_patch16_224",
+          "dacc_pts": 0.33121019108280914,
+          "thr1": 0.12045562472742208,
+          "thr2": 0.26544802680948604,
+          "thr_ratio": 2.203699722700089,
+          "both_reliable": true,
+          "acc1": 0.898343949044586,
+          "acc2": 0.8950318471337579
+        },
+        {
+          "m1": "swin_tiny_patch4_window7_224",
+          "m2": "mobilenetv3_large_100",
+          "dacc_pts": 0.7898089171974543,
+          "thr1": 0.1254780892139094,
+          "thr2": 0.062138818538847784,
+          "thr_ratio": 2.0193188760977705,
+          "both_reliable": true,
+          "acc1": 0.8598726114649682,
+          "acc2": 0.8519745222929936
+        },
+        {
+          "m1": "resnet50",
+          "m2": "deit_small_patch16_224",
+          "dacc_pts": 0.5350318471337601,
+          "thr1": 0.09753193985847272,
+          "thr2": 0.16698835963304873,
+          "thr_ratio": 1.7121402473421863,
+          "both_reliable": true,
+          "acc1": 0.8626751592356688,
+          "acc2": 0.8573248407643312
+        },
+        {
+          "m1": "deit_small_patch16_224",
+          "m2": "swin_tiny_patch4_window7_224",
+          "dacc_pts": 0.2547770700636942,
+          "thr1": 0.16698835963304873,
+          "thr2": 0.1254780892139094,
+          "thr_ratio": 1.3308168834829361,
+          "both_reliable": true,
+          "acc1": 0.8573248407643312,
+          "acc2": 0.8598726114649682
+        },
+        {
+          "m1": "resnet50",
+          "m2": "swin_tiny_patch4_window7_224",
+          "dacc_pts": 0.28025477707006585,
+          "thr1": 0.09753193985847272,
+          "thr2": 0.1254780892139094,
+          "thr_ratio": 1.2865333079193233,
+          "both_reliable": true,
+          "acc1": 0.8626751592356688,
+          "acc2": 0.8598726114649682
+        },
+        {
+          "m1": "efficientnet_b0",
+          "m2": "mobilenetv3_large_100",
+          "dacc_pts": 0.5095541401273884,
+          "thr1": 0.0670640205801951,
+          "thr2": 0.062138818538847784,
+          "thr_ratio": 1.0792612759167315,
+          "both_reliable": true,
+          "acc1": 0.8468789808917198,
+          "acc2": 0.8519745222929936
+        }
+      ],
+      "extrap_names": []
+    }
+  },
+  "cross_suite": {
+    "corr": {
+      "pearson": -0.6752732020358027,
+      "pearson_ci": [
+        -0.8911014776973226,
+        -0.3063226782665562
+      ],
+      "spearman": -0.5878787878787878,
+      "spearman_ci": [
+        -0.8909090909090909,
+        0.2121212121212121
+      ],
+      "r2": 0.455993897387686,
+      "r2_ci": [
+        0.0986306846431204,
+        0.7940618445294472
+      ],
+      "r2_ci_excludes_0.7": false,
+      "r2_ci_excludes_0.3": false,
+      "n": 10
+    },
+    "models": [
+      "resnet18",
+      "resnet50",
+      "resnet101",
+      "efficientnet_b0",
+      "convnext_tiny",
+      "vit_small_patch16_224",
+      "vit_base_patch16_224",
+      "deit_small_patch16_224",
+      "swin_tiny_patch4_window7_224",
+      "mobilenetv3_large_100"
+    ],
+    "n": 10
+  },
+  "v1_vs_v2": [
+    {
+      "model": "resnet18",
+      "v1": 0.23628253119685358,
+      "v2": 0.20883840336385553,
+      "pct_change": 11.614962686400872,
+      "v1_reliable": true,
+      "v2_reliable": true,
+      "material": true
+    },
+    {
+      "model": "resnet50",
+      "v1": 0.052079545930025554,
+      "v2": 0.046542774441060156,
+      "pct_change": 10.63137435261944,
+      "v1_reliable": true,
+      "v2_reliable": true,
+      "material": true
+    },
+    {
+      "model": "resnet101",
+      "v1": 0.0005735929786097133,
+      "v2": 0.010213493645802197,
+      "pct_change": 1680.616922919433,
+      "v1_reliable": false,
+      "v2_reliable": true,
+      "material": false
+    },
+    {
+      "model": "efficientnet_b0",
+      "v1": 0.20755621282088477,
+      "v2": 0.2011226723402534,
+      "pct_change": 3.099661722091317,
+      "v1_reliable": true,
+      "v2_reliable": true,
+      "material": true
+    },
+    {
+      "model": "convnext_tiny",
+      "v1": 0.06253075317055738,
+      "v2": 0.03933864915663347,
+      "pct_change": 37.08911669537336,
+      "v1_reliable": true,
+      "v2_reliable": true,
+      "material": true
+    },
+    {
+      "model": "vit_small_patch16_224",
+      "v1": 0.19165534707828794,
+      "v2": 0.18260350108959428,
+      "pct_change": 4.722981188203495,
+      "v1_reliable": true,
+      "v2_reliable": true,
+      "material": true
+    },
+    {
+      "model": "vit_base_patch16_224",
+      "v1": 0.027848300648346903,
+      "v2": 0.024782736181010193,
+      "pct_change": 11.008084500548097,
+      "v1_reliable": true,
+      "v2_reliable": true,
+      "material": true
+    },
+    {
+      "model": "deit_small_patch16_224",
+      "v1": 0.022690569613100422,
+      "v2": 0.05902521355048863,
+      "pct_change": 160.13103486133008,
+      "v1_reliable": true,
+      "v2_reliable": true,
+      "material": true
+    },
+    {
+      "model": "swin_tiny_patch4_window7_224",
+      "v1": 0.02596114678673006,
+      "v2": 0.06313535904788518,
+      "pct_change": 143.19171863454267,
+      "v1_reliable": true,
+      "v2_reliable": true,
+      "material": true
+    },
+    {
+      "model": "mobilenetv3_large_100",
+      "v1": 0.2346315826322525,
+      "v2": 0.23037360018011255,
+      "pct_change": 1.8147524746545587,
+      "v1_reliable": true,
+      "v2_reliable": true,
+      "material": true
+    }
+  ],
+  "config_hashes": {
+    "contrast|resnet18": "f940f6d087ecd6dc37fd467eef0f08eb8329e0c967761b427f6c218b177107d2",
+    "degradation|resnet18": "9a5c5063c5b4db19a639fd751bdc59cb476d7b90ef2af1e8b40cb22b6573fc55",
+    "contrast|resnet50": "96840e24c96395a276c341d10ea466da13cfc9ef9c107079c06c63bb266fbed3",
+    "degradation|resnet50": "ccc5603225d50166b535fad7dd71323456ac966005139bd4feef1225d644c39a",
+    "contrast|resnet101": "4cea4f5b910ed49207cb3ee0a45f293a1a188f8d03cfd9bcd8eb5e61493c8f6a",
+    "degradation|resnet101": "ada1f8921fdaac46b0a21d12caddd29c02031407141b28cb1960962f2aeb83a2",
+    "contrast|efficientnet_b0": "145ee043598a0ec866566ad0072f5bb739ec9fc6887e03cd487cca120c0d3e3c",
+    "degradation|efficientnet_b0": "74c75d4b7cc9d140f205dfb25762353e1c5263dc7ee407750007e28d830456fb",
+    "contrast|convnext_tiny": "5fb96a6ef796dc824d5637e9b0d4c888679c9937ba578e42dc533520eb11cd7e",
+    "degradation|convnext_tiny": "78e6b219a157f0257f2d975afbbad7f43ee088e52e9fc1ba9e9dbe3ebf0551f3",
+    "contrast|vit_small_patch16_224": "eb622e05c7c4d77e7b4558cc0434e0ca556bb9eae71f451e49831f3dea6a08ce",
+    "degradation|vit_small_patch16_224": "fc6ab5f5a101def4074436530b30ba23f721c43875bea6dc9d41a90794207771",
+    "contrast|vit_base_patch16_224": "7b6494619b0971b685eabe1930acaaaab69f2c88218fc1d3827c24b77aa46355",
+    "degradation|vit_base_patch16_224": "15e73d55b989703b6d5482ff87ded726ef224a3e3c9d26492327afe22c2db465",
+    "contrast|deit_small_patch16_224": "293bff41a7ca9aa8fbffa3dba8ff4466364ec027c90d7bc618cd012677e1c9bb",
+    "degradation|deit_small_patch16_224": "99c93f031c87aa18fb82e8554d3bc04eb1430ad6116e77b8c0528ed5fc9ef7ba",
+    "contrast|swin_tiny_patch4_window7_224": "23df4916bcda84598daf1c3ec4f4892eb1b887bd3c878be75e576a5f30d5d1c3",
+    "degradation|swin_tiny_patch4_window7_224": "fedd1753c12d0846253ea02b196ad03087dd50919c373b84d1330a69e6ac8529",
+    "contrast|mobilenetv3_large_100": "a986b334daa5164f4ef2d518bc2bdbb438c2e1b24a318ab0003490e89434170e",
+    "degradation|mobilenetv3_large_100": "cda2b732ce7018e38179f6a84c300132e2446892cacf7f983f6cff573a1d9231"
+  },
+  "per_item_dir": "C:\\Users\\glopu\\OneDrive\\Desktop\\Experiments\\psyvis-ml\\experiments\\test_c_threshold_vs_accuracy_v2\\per_item",
+  "per_item_total_rows": 667250,
+  "versions": {
+    "psyvis_ml": "0.0.1",
+    "python": "3.11.0",
+    "numpy": "2.3.0",
+    "torch": "2.6.0+cu124",
+    "timm": "1.0.27",
+    "scipy": "1.15.3"
+  },
+  "wall_clock_seconds": 3696.5
+}

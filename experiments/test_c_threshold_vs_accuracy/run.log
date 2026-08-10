@@ -1,0 +1,57 @@
+==============================================================================
+Test C — contrast threshold vs. clean accuracy (REAL DATA ONLY)
+==============================================================================
+device: cuda:NVIDIA GeForce RTX 4070 SUPER · torch 2.6.0+cu124 · timm 1.0.27
+[gate] dataset C:\Users\glopu\OneDrive\Desktop\Experiments\Exp_assets\imagenette2-320\val · 3925 real images (== Test A) · loaded 5.6s
+[gate] contrast levels = [0.01       0.01919383 0.03684031 0.07071068 0.13572088 0.26050037
+ 0.5       ]
+
+[1/10] resnet18 (CNN) — loading pretrained ...
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  [gate] clean top-1 = 0.7541 (chance 0.0010) PASS · params 11.7M · tag a1_in1k · 6.3s
+  threshold=0.2363 CI=[0.2246,0.2477] slope=0.6034 converged=True at_bound=— (sweep 88.1s) | elapsed 1.6m ETA 14.6m
+
+[2/10] resnet50 (CNN) — loading pretrained ...
+  [gate] clean top-1 = 0.8627 (chance 0.0010) PASS · params 25.6M · tag a1_in1k · 12.8s
+  threshold=0.05208 CI=[0.04899,0.05528] slope=1.726 converged=True at_bound=— (sweep 134.8s) | elapsed 4.2m ETA 16.6m
+
+[3/10] resnet101 (CNN) — loading pretrained ...
+  [gate] clean top-1 = 0.8983 (chance 0.0010) PASS · params 44.5M · tag a1h_in1k · 25.3s
+  threshold=0.0005736 CI=[0.0005351,0.0009047] slope=53.14 converged=True at_bound=['alpha'] (sweep 230.4s) | elapsed 8.5m ETA 19.9m
+
+[4/10] efficientnet_b0 (CNN) — loading pretrained ...
+  [gate] clean top-1 = 0.8469 (chance 0.0010) PASS · params 5.3M · tag ra_in1k · 22.3s
+  threshold=0.2076 CI=[0.2019,0.2133] slope=1.378 converged=True at_bound=— (sweep 173.0s) | elapsed 11.8m ETA 17.7m
+
+[5/10] convnext_tiny (CNN) — loading pretrained ...
+  [gate] clean top-1 = 0.8818 (chance 0.0010) PASS · params 28.6M · tag in12k_ft_in1k · 12.6s
+  threshold=0.06253 CI=[0.05984,0.06505] slope=2.094 converged=True at_bound=— (sweep 127.1s) | elapsed 14.2m ETA 14.2m
+
+[6/10] vit_small_patch16_224 (ViT) — loading pretrained ...
+  [gate] clean top-1 = 0.8227 (chance 0.0010) PASS · params 22.1M · tag augreg_in21k_ft_in1k · 11.5s
+  threshold=0.1917 CI=[0.185,0.1983] slope=1.069 converged=True at_bound=— (sweep 114.5s) | elapsed 16.4m ETA 10.9m
+
+[7/10] vit_base_patch16_224 (ViT) — loading pretrained ...
+  [gate] clean top-1 = 0.8950 (chance 0.0010) PASS · params 86.6M · tag augreg2_in21k_ft_in1k · 17.5s
+  threshold=0.02785 CI=[0.02581,0.02983] slope=3.209 converged=True at_bound=— (sweep 154.5s) | elapsed 19.3m ETA 8.3m
+
+[8/10] deit_small_patch16_224 (ViT) — loading pretrained ...
+  [gate] clean top-1 = 0.8573 (chance 0.0010) PASS · params 22.1M · tag fb_in1k · 11.7s
+  threshold=0.02269 CI=[0.01981,0.0257] slope=2.284 converged=True at_bound=— (sweep 109.9s) | elapsed 21.4m ETA 5.4m
+
+[9/10] swin_tiny_patch4_window7_224 (hybrid) — loading pretrained ...
+  [gate] clean top-1 = 0.8599 (chance 0.0010) PASS · params 28.3M · tag ms_in1k · 21.5s
+  threshold=0.02596 CI=[0.02233,0.02957] slope=1.824 converged=True at_bound=— (sweep 187.4s) | elapsed 25.0m ETA 2.8m
+
+[10/10] mobilenetv3_large_100 (CNN) — loading pretrained ...
+  [gate] clean top-1 = 0.8520 (chance 0.0010) PASS · params 5.5M · tag ra_in1k · 14.6s
+  threshold=0.2346 CI=[0.2288,0.2404] slope=1.386 converged=True at_bound=— (sweep 153.9s) | elapsed 27.9m ETA 0.0m
+
+==============================================================================
+VERDICT: INTERMEDIATE
+  - Pearson r²=0.54 is in [0.3, 0.7]: accuracy and threshold are partly but not wholly redundant. Sharpen with more models and a wider capacity range (and a harder dataset to widen the accuracy axis).
+  - Accuracy spread is 14.4 points (not near-ceiling), so the correlation is not obviously suppressed by range restriction.
+
+acc↔threshold: Pearson r=-0.736 (r²=0.541), Spearman ρ=-0.745 | acc spread 14.4 pts
+total wall-clock: 27.9 min (10 models)
+wrote results.csv, results.md, threshold_vs_accuracy.png, provenance.json -> C:\Users\glopu\OneDrive\Desktop\Experiments\psyvis-ml\experiments\test_c_threshold_vs_accuracy

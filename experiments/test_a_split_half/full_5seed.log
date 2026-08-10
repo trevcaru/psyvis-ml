@@ -1,0 +1,187 @@
+==============================================================================
+Test A — threshold split-half reliability (REAL DATA ONLY)
+==============================================================================
+split seeds       : [0, 1, 2, 3, 4]
+bootstrap n / seed: 2000 / 12345
+max_per_class     : FULL val set
+output dir        : C:\Users\glopu\OneDrive\Desktop\Experiments\psyvis-ml\experiments\test_a_split_half
+
+[gate] loading real Imagenette val set once ...
+[gate] path exists & is a directory: C:\Users\glopu\OneDrive\Desktop\Experiments\Exp_assets\imagenette2-320\val
+[gate] real image files loaded (opened from disk): 3925
+[gate] classes: 10  per-class counts: {0: 387, 217: 395, 482: 357, 491: 386, 497: 409, 566: 394, 569: 389, 571: 419, 574: 399, 701: 390}
+[gate] load took 8.0s
+
+[gate] loading models (timm, pretrained=True, frozen, eval) ...
+    [timm:resnet50] clean top-1 on 40 real imgs = 0.975 (chance=0.0010)
+    [timm:vit_small_patch16_224] clean top-1 on 40 real imgs = 0.975 (chance=0.0010)
+[gate] suite contrast: levels = [0.01       0.01919383 0.03684031 0.07071068 0.13572088 0.26050037
+ 0.5       ]
+[gate] suite degradation: levels = [0.         0.13333333 0.26666667 0.4        0.53333333 0.66666667
+ 0.8       ]
+
+############################################################
+# split seed 0
+############################################################
+[gate] half A: 1962 imgs  half B: 1963 imgs  (disjoint, union = 3925 = n_items 3925)
+[gate] class balance A: {0: 195, 217: 200, 482: 170, 491: 177, 497: 211, 566: 190, 569: 201, 571: 205, 574: 205, 701: 208}
+[gate] class balance B: {0: 192, 217: 195, 482: 187, 491: 209, 497: 198, 566: 204, 569: 188, 571: 214, 574: 194, 701: 182}
+
+  -> sweep 1/40: contrast / resnet50 / half A (1962 imgs) ...
+     thr=0.04895 CI=[0.04451,0.05291] converged=True at_bound=— (67.3s) | elapsed 1.2m ETA 46.2m
+
+  -> sweep 2/40: contrast / resnet50 / half B (1963 imgs) ...
+     thr=0.05539 CI=[0.05055,0.06022] converged=True at_bound=— (70.2s) | elapsed 2.4m ETA 45.9m
+
+  -> sweep 3/40: contrast / vit_small_patch16_224 / half A (1962 imgs) ...
+     thr=0.1919 CI=[0.1827,0.2014] converged=True at_bound=— (56.6s) | elapsed 3.4m ETA 42.0m
+
+  -> sweep 4/40: contrast / vit_small_patch16_224 / half B (1963 imgs) ...
+     thr=0.1914 CI=[0.1824,0.2009] converged=True at_bound=— (57.2s) | elapsed 4.4m ETA 39.6m
+
+  -> sweep 5/40: degradation / resnet50 / half A (1962 imgs) ...
+     thr=0.09487 CI=[0.08722,0.1027] converged=True at_bound=— (74.7s) | elapsed 5.7m ETA 39.9m
+
+  -> sweep 6/40: degradation / resnet50 / half B (1963 imgs) ...
+     thr=0.09855 CI=[0.09091,0.1064] converged=True at_bound=— (74.5s) | elapsed 7.0m ETA 39.7m
+
+  -> sweep 7/40: degradation / vit_small_patch16_224 / half A (1962 imgs) ...
+     thr=0.1172 CI=[0.1077,0.1269] converged=True at_bound=— (64.5s) | elapsed 8.1m ETA 38.4m
+
+  -> sweep 8/40: degradation / vit_small_patch16_224 / half B (1963 imgs) ...
+     thr=0.1257 CI=[0.1167,0.1348] converged=True at_bound=— (64.5s) | elapsed 9.3m ETA 37.1m
+
+############################################################
+# split seed 1
+############################################################
+[gate] half A: 1962 imgs  half B: 1963 imgs  (disjoint, union = 3925 = n_items 3925)
+[gate] class balance A: {0: 180, 217: 202, 482: 192, 491: 183, 497: 214, 566: 199, 569: 173, 571: 237, 574: 198, 701: 184}
+[gate] class balance B: {0: 207, 217: 193, 482: 165, 491: 203, 497: 195, 566: 195, 569: 216, 571: 182, 574: 201, 701: 206}
+
+  -> sweep 9/40: contrast / resnet50 / half A (1962 imgs) ...
+     thr=0.05783 CI=[0.0531,0.06279] converged=True at_bound=— (70.2s) | elapsed 11.0m ETA 37.7m
+
+  -> sweep 10/40: contrast / resnet50 / half B (1963 imgs) ...
+     thr=0.04693 CI=[0.0429,0.05083] converged=True at_bound=— (69.0s) | elapsed 12.2m ETA 36.5m
+
+  -> sweep 11/40: contrast / vit_small_patch16_224 / half A (1962 imgs) ...
+     thr=0.198 CI=[0.1883,0.2079] converged=True at_bound=— (60.8s) | elapsed 13.2m ETA 34.9m
+
+  -> sweep 12/40: contrast / vit_small_patch16_224 / half B (1963 imgs) ...
+     thr=0.1855 CI=[0.1768,0.1947] converged=True at_bound=— (63.4s) | elapsed 14.3m ETA 33.4m
+
+  -> sweep 13/40: degradation / resnet50 / half A (1962 imgs) ...
+     thr=0.0898 CI=[0.08211,0.09796] converged=True at_bound=— (73.9s) | elapsed 15.6m ETA 32.4m
+
+  -> sweep 14/40: degradation / resnet50 / half B (1963 imgs) ...
+     thr=0.1045 CI=[0.09705,0.1119] converged=True at_bound=— (73.5s) | elapsed 16.9m ETA 31.4m
+
+  -> sweep 15/40: degradation / vit_small_patch16_224 / half A (1962 imgs) ...
+     thr=0.1163 CI=[0.1066,0.1261] converged=True at_bound=— (83.2s) | elapsed 18.4m ETA 30.6m
+
+  -> sweep 16/40: degradation / vit_small_patch16_224 / half B (1963 imgs) ...
+     thr=0.1283 CI=[0.1192,0.1376] converged=True at_bound=— (65.5s) | elapsed 19.5m ETA 29.3m
+
+############################################################
+# split seed 2
+############################################################
+[gate] half A: 1962 imgs  half B: 1963 imgs  (disjoint, union = 3925 = n_items 3925)
+[gate] class balance A: {0: 199, 217: 194, 482: 166, 491: 188, 497: 203, 566: 186, 569: 187, 571: 218, 574: 214, 701: 207}
+[gate] class balance B: {0: 188, 217: 201, 482: 191, 491: 198, 497: 206, 566: 208, 569: 202, 571: 201, 574: 185, 701: 183}
+
+  -> sweep 17/40: contrast / resnet50 / half A (1962 imgs) ...
+     thr=0.04744 CI=[0.04315,0.05142] converged=True at_bound=— (67.2s) | elapsed 21.1m ETA 28.6m
+
+  -> sweep 18/40: contrast / resnet50 / half B (1963 imgs) ...
+     thr=0.05721 CI=[0.05254,0.06223] converged=True at_bound=— (90.9s) | elapsed 22.7m ETA 27.8m
+
+  -> sweep 19/40: contrast / vit_small_patch16_224 / half A (1962 imgs) ...
+     thr=0.1827 CI=[0.1739,0.1918] converged=True at_bound=— (77.7s) | elapsed 24.1m ETA 26.6m
+
+  -> sweep 20/40: contrast / vit_small_patch16_224 / half B (1963 imgs) ...
+     thr=0.2008 CI=[0.1912,0.2106] converged=True at_bound=— (79.1s) | elapsed 25.4m ETA 25.4m
+
+  -> sweep 21/40: degradation / resnet50 / half A (1962 imgs) ...
+     thr=0.09925 CI=[0.09159,0.107] converged=True at_bound=— (98.0s) | elapsed 27.1m ETA 24.5m
+
+  -> sweep 22/40: degradation / resnet50 / half B (1963 imgs) ...
+     thr=0.09492 CI=[0.08752,0.1029] converged=True at_bound=— (93.7s) | elapsed 28.8m ETA 23.5m
+
+  -> sweep 23/40: degradation / vit_small_patch16_224 / half A (1962 imgs) ...
+     thr=0.1345 CI=[0.1252,0.1439] converged=True at_bound=— (70.7s) | elapsed 30.0m ETA 22.2m
+
+  -> sweep 24/40: degradation / vit_small_patch16_224 / half B (1963 imgs) ...
+     thr=0.1105 CI=[0.101,0.12] converged=True at_bound=— (65.6s) | elapsed 31.1m ETA 20.8m
+
+############################################################
+# split seed 3
+############################################################
+[gate] half A: 1962 imgs  half B: 1963 imgs  (disjoint, union = 3925 = n_items 3925)
+[gate] class balance A: {0: 204, 217: 192, 482: 174, 491: 197, 497: 194, 566: 193, 569: 209, 571: 201, 574: 204, 701: 194}
+[gate] class balance B: {0: 183, 217: 203, 482: 183, 491: 189, 497: 215, 566: 201, 569: 180, 571: 218, 574: 195, 701: 196}
+
+  -> sweep 25/40: contrast / resnet50 / half A (1962 imgs) ...
+     thr=0.05293 CI=[0.04862,0.0573] converged=True at_bound=— (88.1s) | elapsed 33.1m ETA 19.9m
+
+  -> sweep 26/40: contrast / resnet50 / half B (1963 imgs) ...
+     thr=0.05115 CI=[0.04663,0.05559] converged=True at_bound=— (88.2s) | elapsed 34.6m ETA 18.7m
+
+  -> sweep 27/40: contrast / vit_small_patch16_224 / half A (1962 imgs) ...
+     thr=0.1833 CI=[0.1748,0.192] converged=True at_bound=— (76.1s) | elapsed 36.0m ETA 17.3m
+
+  -> sweep 28/40: contrast / vit_small_patch16_224 / half B (1963 imgs) ...
+     thr=0.2005 CI=[0.1905,0.2111] converged=True at_bound=— (76.6s) | elapsed 37.3m ETA 16.0m
+
+  -> sweep 29/40: degradation / resnet50 / half A (1962 imgs) ...
+     thr=0.09398 CI=[0.08616,0.1015] converged=True at_bound=— (97.7s) | elapsed 39.0m ETA 14.8m
+
+  -> sweep 30/40: degradation / resnet50 / half B (1963 imgs) ...
+     thr=0.09599 CI=[0.08811,0.1037] converged=True at_bound=— (97.9s) | elapsed 40.7m ETA 13.6m
+
+  -> sweep 31/40: degradation / vit_small_patch16_224 / half A (1962 imgs) ...
+     thr=0.1283 CI=[0.1196,0.1372] converged=True at_bound=— (70.6s) | elapsed 41.9m ETA 12.2m
+
+  -> sweep 32/40: degradation / vit_small_patch16_224 / half B (1963 imgs) ...
+     thr=0.1167 CI=[0.1076,0.1263] converged=True at_bound=— (67.0s) | elapsed 43.1m ETA 10.8m
+
+############################################################
+# split seed 4
+############################################################
+[gate] half A: 1962 imgs  half B: 1963 imgs  (disjoint, union = 3925 = n_items 3925)
+[gate] class balance A: {0: 188, 217: 189, 482: 174, 491: 209, 497: 209, 566: 192, 569: 192, 571: 207, 574: 202, 701: 200}
+[gate] class balance B: {0: 199, 217: 206, 482: 183, 491: 177, 497: 200, 566: 202, 569: 197, 571: 212, 574: 197, 701: 190}
+
+  -> sweep 33/40: contrast / resnet50 / half A (1962 imgs) ...
+     thr=0.05556 CI=[0.0508,0.06032] converged=True at_bound=— (71.2s) | elapsed 44.8m ETA 9.5m
+
+  -> sweep 34/40: contrast / resnet50 / half B (1963 imgs) ...
+     thr=0.04892 CI=[0.04487,0.05325] converged=True at_bound=— (70.3s) | elapsed 46.0m ETA 8.1m
+
+  -> sweep 35/40: contrast / vit_small_patch16_224 / half A (1962 imgs) ...
+     thr=0.1986 CI=[0.1892,0.2085] converged=True at_bound=— (60.0s) | elapsed 47.1m ETA 6.7m
+
+  -> sweep 36/40: contrast / vit_small_patch16_224 / half B (1963 imgs) ...
+     thr=0.185 CI=[0.1765,0.1939] converged=True at_bound=— (60.7s) | elapsed 48.1m ETA 5.3m
+
+  -> sweep 37/40: degradation / resnet50 / half A (1962 imgs) ...
+     thr=0.09048 CI=[0.08229,0.09837] converged=True at_bound=— (74.2s) | elapsed 49.4m ETA 4.0m
+
+  -> sweep 38/40: degradation / resnet50 / half B (1963 imgs) ...
+     thr=0.1006 CI=[0.09313,0.1083] converged=True at_bound=— (74.2s) | elapsed 50.7m ETA 2.7m
+
+  -> sweep 39/40: degradation / vit_small_patch16_224 / half A (1962 imgs) ...
+     thr=0.1186 CI=[0.1099,0.1282] converged=True at_bound=— (66.0s) | elapsed 51.9m ETA 1.3m
+
+  -> sweep 40/40: degradation / vit_small_patch16_224 / half B (1963 imgs) ...
+     thr=0.1256 CI=[0.1166,0.135] converged=True at_bound=— (66.6s) | elapsed 53.0m ETA 0.0m
+
+==============================================================================
+VERDICT: AMBIGUOUS
+  - only 20 comparison(s) so far
+  - overlap rate 85%
+  - max |Δ|/gap 67%
+  - run the full 5-seed design (20 comparisons) to resolve
+
+overlap rate: 85% (20 evaluable) | ranking held 20/20 | paired-Δ excludes-0 rate 40%
+total wall-clock: 53.5 min (20 comparisons, 40 sweeps)
+wrote: results.csv, results.md, split_half.png, provenance.json -> C:\Users\glopu\OneDrive\Desktop\Experiments\psyvis-ml\experiments\test_a_split_half
