@@ -36,4 +36,5 @@ Thumbs.db
 !/outputs/real_degradation_type2/
 !/outputs/real_distractor_type2/
 !/outputs/poster_10model_curves/
+!/outputs/poster_10model_curves_v3/
 report_bundle/

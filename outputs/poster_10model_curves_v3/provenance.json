@@ -1,0 +1,131 @@
+{
+  "generated": "2026-10-25T15:00:19.750769+00:00",
+  "script": "experiments/poster_10model_curves/make_poster_10model_curves_v3.py",
+  "git_head_at_run": "6a65f063ef7ef737e724326b74ff014a4f39d9ed",
+  "inputs": {
+    "curves_json": {
+      "path": "experiments/test_c_threshold_vs_accuracy_v2/curves.json",
+      "sha256": "e79744f91a82156e6f536a4a72842b2aeb2f5d9f0524da79c3027158e58af3f1"
+    },
+    "v1_fits_json": {
+      "path": "outputs/poster_10model_curves/fits.json",
+      "sha256": "12c9fb2105cd7b0e34eacd60e9c51e98f8afafa011cc44cf7c6706127b04afb9"
+    },
+    "per_item": {
+      "resnet18": {
+        "file": "contrast__resnet18.csv",
+        "sha256": "b6a198ac81f32896b3a62bfa7c5b6f1160620116435e09b8e3e94405366fe4a3",
+        "rows": 39250
+      },
+      "resnet50": {
+        "file": "contrast__resnet50.csv",
+        "sha256": "87ea2e040573fbb5810cba54470b2fd795191cee5bb700229bde4118aed04d75",
+        "rows": 39250
+      },
+      "resnet101": {
+        "file": "contrast__resnet101.csv",
+        "sha256": "de563caed64ac3745c5b3a39189f9b143dc9a6d568f4b4780f9088ceb7b70504",
+        "rows": 39250
+      },
+      "efficientnet_b0": {
+        "file": "contrast__efficientnet_b0.csv",
+        "sha256": "6f145c9807e2dd8730d8a71fa02c8b9b37059f900c9cf5996882d1aaf06353a1",
+        "rows": 39250
+      },
+      "convnext_tiny": {
+        "file": "contrast__convnext_tiny.csv",
+        "sha256": "ec211171aa9a1af7c9bd126d8ba29e3c77bf1cf5631f2bdc584c4e8a65e71f06",
+        "rows": 39250
+      },
+      "vit_small_patch16_224": {
+        "file": "contrast__vit_small_patch16_224.csv",
+        "sha256": "62b0ea4fc44b1d71d3d26cf31b21a26d2d340354893a0e40c428015fec5a7ca4",
+        "rows": 39250
+      },
+      "vit_base_patch16_224": {
+        "file": "contrast__vit_base_patch16_224.csv",
+        "sha256": "35deece074ac6da1ed92452bd83270e94b75bee1807c43d3c9efd633c6c2d6aa",
+        "rows": 39250
+      },
+      "deit_small_patch16_224": {
+        "file": "contrast__deit_small_patch16_224.csv",
+        "sha256": "b3d798e7df475b468ea2adc004c06c9b196a80822f7ce97a9053a75f17cca55b",
+        "rows": 39250
+      },
+      "swin_tiny_patch4_window7_224": {
+        "file": "contrast__swin_tiny_patch4_window7_224.csv",
+        "sha256": "fa250ca08b0db2be47ecbe1893a7a413b87fa865be6d7a5671aebaa3f5ab5fe4",
+        "rows": 39250
+      },
+      "mobilenetv3_large_100": {
+        "file": "contrast__mobilenetv3_large_100.csv",
+        "sha256": "dff1fae1545e6719c0d674f6e38ac40a0146c115b138b5e3830cb3466f17505a",
+        "rows": 39250
+      }
+    }
+  },
+  "settings": {
+    "suite": "contrast",
+    "threshold": "model-free; first upward crossing of chance + 0.5*(max observed - chance), linear in log10 contrast",
+    "line": "PCHIP in log10 contrast",
+    "chance": 0.001,
+    "n_boot": 2000,
+    "boot_seed": 12345,
+    "bootstrap": "over images, shared across models",
+    "weibull_gof": "deviance vs chi2(levels - 3), poster v1 params, no refit"
+  },
+  "figure": {
+    "width_in": 14.0,
+    "height_in": 10.0,
+    "dpi": 300,
+    "tick_pt": 24,
+    "legend_pt": 24,
+    "axis_label_pt": 28,
+    "highlight": {
+      "Swin-Tiny": "#eb6834",
+      "ResNet-50": "#2a78d6",
+      "MobileNetV3-Large": "#1baf7a"
+    },
+    "grey": "#c3c2b7"
+  },
+  "diamond_overlaps": [
+    {
+      "a": "EfficientNet-B0",
+      "b": "MobileNetV3-Large",
+      "center_dist_px": 151.7,
+      "touch_dist_px": 102.5,
+      "overlap": false
+    },
+    {
+      "a": "ConvNeXt-Tiny",
+      "b": "ResNet-50",
+      "center_dist_px": 146.8,
+      "touch_dist_px": 102.5,
+      "overlap": false
+    },
+    {
+      "a": "ViT-Base",
+      "b": "ResNet-50",
+      "center_dist_px": 106.5,
+      "touch_dist_px": 102.5,
+      "overlap": false
+    },
+    {
+      "a": "DeiT-Small",
+      "b": "Swin-Tiny",
+      "center_dist_px": 107.3,
+      "touch_dist_px": 102.5,
+      "overlap": false
+    }
+  ],
+  "max_diamond_offset_from_line_pts": 0.6373250526558683,
+  "versions": {
+    "python": "3.11.0",
+    "numpy": "2.3.0",
+    "scipy": "1.15.3",
+    "matplotlib": "3.10.3"
+  },
+  "argv": [
+    "experiments/poster_10model_curves/make_poster_10model_curves_v3.py"
+  ]
+}
